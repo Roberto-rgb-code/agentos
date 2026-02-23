@@ -15,7 +15,7 @@ import { useSidebarToggle, ToggleSidebarButton } from "./SidebarToggle";
 import SearchBox from "./SearchBox";
 import { Tooltip } from "react-tooltip";
 import { createPortal } from "react-dom";
-import { Users, ChartLine, Lock, FlowArrow } from "@phosphor-icons/react";
+import { Users, ChartLine, Lock, FlowArrow, Package, Robot } from "@phosphor-icons/react";
 
 export default function Sidebar() {
   const { user } = useUser();
@@ -211,8 +211,6 @@ function NewWorkspaceButton({ user, showNewWsModal }) {
 }
 
 function CRMNavigation({ user }) {
-  const isPremium = user?.plan === "premium";
-
   return (
     <div className="flex flex-col gap-y-2 px-2">
       <Link
@@ -220,41 +218,29 @@ function CRMNavigation({ user }) {
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-theme-bg-primary text-theme-text-secondary hover:text-theme-text-primary transition-colors"
       >
         <Users className="h-5 w-5" />
-        <span className="text-sm font-medium">CRM</span>
+        <span className="text-sm font-medium">CRM - Leads</span>
       </Link>
-      {isPremium ? (
-        <Link
-          to={paths.analytics()}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-theme-bg-primary text-theme-text-secondary hover:text-theme-text-primary transition-colors"
-        >
-          <ChartLine className="h-5 w-5" />
-          <span className="text-sm font-medium">Analytics</span>
-        </Link>
-      ) : (
-        <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-theme-text-secondary opacity-50 cursor-not-allowed"
-          data-tooltip-id="premium-lock"
-          data-tooltip-content="Premium feature"
-        >
-          <Lock className="h-5 w-5" />
-          <span className="text-sm font-medium">Analytics</span>
-        </div>
-      )}
-      {isPremium && (
-        <Link
-          to={paths.workflows()}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-theme-bg-primary text-theme-text-secondary hover:text-theme-text-primary transition-colors"
-        >
-          <FlowArrow className="h-5 w-5" />
-          <span className="text-sm font-medium">Workflows</span>
-        </Link>
-      )}
-      <Tooltip
-        id="premium-lock"
-        place="right"
-        delayShow={300}
-        className="tooltip !text-xs z-99"
-      />
+      <Link
+        to={paths.crm.productos()}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-theme-bg-primary text-theme-text-secondary hover:text-theme-text-primary transition-colors"
+      >
+        <Package className="h-5 w-5" />
+        <span className="text-sm font-medium">Productos</span>
+      </Link>
+      <Link
+        to={paths.crm.agentes()}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-theme-bg-primary text-theme-text-secondary hover:text-theme-text-primary transition-colors"
+      >
+        <Robot className="h-5 w-5" />
+        <span className="text-sm font-medium">Agentes IA</span>
+      </Link>
+      <Link
+        to={paths.workflows.home()}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-theme-bg-primary text-theme-text-secondary hover:text-theme-text-primary transition-colors"
+      >
+        <FlowArrow className="h-5 w-5" />
+        <span className="text-sm font-medium">Workflows</span>
+      </Link>
     </div>
   );
 }

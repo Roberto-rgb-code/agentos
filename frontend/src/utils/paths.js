@@ -232,7 +232,11 @@ export default {
   crm: {
     leads: () => `/crm/leads`,
     lead: (id) => `/crm/leads/${id}`,
+    productos: () => `/crm/productos`,
+    agentes: () => `/crm/agentes`,
   },
   analytics: () => `/analytics`,
-  workflows: () => `/workflows`,
+  workflows: {
+    home: () => `/workflows`,
+  },
 };

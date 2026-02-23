@@ -43,6 +43,8 @@ services:
       EMBEDDING_BASE_PATH: http://host.docker.internal:11434
       EMBEDDING_MODEL_PREF: nomic-embed-text
       STORAGE_DIR: /app/storage
+      SEED_ADMIN_EMAIL: admin
+      SEED_ADMIN_PASSWORD: admin123
     ports:
       - "3001:3001"
     volumes:

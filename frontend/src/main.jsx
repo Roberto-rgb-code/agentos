@@ -389,7 +389,21 @@ const router = createBrowserRouter([
           return { element: <PrivateRoute Component={CRMLeadDetail} /> };
         },
       },
-      // Analytics route (Premium only)
+      {
+        path: "/crm/productos",
+        lazy: async () => {
+          const { default: CRMProductos } = await import("@/pages/CRM/Productos");
+          return { element: <PrivateRoute Component={CRMProductos} /> };
+        },
+      },
+      {
+        path: "/crm/agentes",
+        lazy: async () => {
+          const { default: CRMAgentes } = await import("@/pages/CRM/Agentes");
+          return { element: <PrivateRoute Component={CRMAgentes} /> };
+        },
+      },
+      // Analytics route
       {
         path: "/analytics",
         lazy: async () => {

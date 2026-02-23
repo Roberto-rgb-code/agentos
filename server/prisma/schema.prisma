@@ -445,24 +445,44 @@ enum LeadEventType {
   RESERVATION
 }
 
+// Pipeline stages matching the commercial pipeline diagram
+enum EtapaPipeline {
+  NUEVO_CLIENTE        // 25%
+  COTIZACION_ENVIADA   // 50%
+  INTERES_AVANZADO     // 75%
+  CERRADA              // 100%
+  RECHAZADA            // 0%
+}
+
 model leads {
-  id            String        @id @default(uuid())
-  owner_user_id Int
-  name          String
-  phone         String?
-  email         String?
-  source        String?       @default("MANUAL")
-  status        LeadStatus    @default(NEW)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  user          users         @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
-  events        lead_events[]
-  messages      whatsapp_messages[]
+  id                    String                  @id @default(uuid())
+  owner_user_id         Int
+  name                  String
+  phone                 String?
+  email                 String?
+  ciudad                String?
+  interes               String?                 // What the lead is interested in
+  source                String?                 @default("MANUAL")
+  status                LeadStatus              @default(NEW)
+  etapa                 EtapaPipeline           @default(NUEVO_CLIENTE)
+  probabilidad_cierre   Float                   @default(25)
+  score_predictivo      Float?                  @default(0)
+  agente_id             String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  user                  users                   @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  agente                agentes?                @relation(fields: [agente_id], references: [id], onDelete: SetNull)
+  events                lead_events[]
+  messages              whatsapp_messages[]
+  conversaciones        conversaciones[]
+  historico             historico_conversacional?
 
   @@index([owner_user_id])
   @@index([status])
+  @@index([etapa])
   @@index([phone])
   @@index([email])
+  @@index([ciudad])
   @@index([createdAt])
 }
 
@@ -471,7 +491,7 @@ model lead_events {
   lead_id   String
   type      LeadEventType
   revenue   Decimal?       @db.Decimal(10, 2)
-  meta      Json?          // JSON object for additional metadata
+  meta      Json?
   createdAt DateTime       @default(now())
   lead      leads          @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
@@ -483,14 +503,87 @@ model lead_events {
 model whatsapp_messages {
   id            String   @id @default(uuid())
   lead_id       String?
-  wa_from       String   // WhatsApp phone number (normalized)
+  wa_from       String
   wa_message_id String   @unique
   body          String
-  raw           Json?    // JSON object for raw webhook payload
+  raw           Json?
   received_at   DateTime @default(now())
   lead          leads?   @relation(fields: [lead_id], references: [id], onDelete: SetNull)
 
   @@index([lead_id])
   @@index([wa_from])
   @@index([received_at])
+}
+
+// ============================================
+// CONVERSACIONES - Chat history per lead
+// ============================================
+model conversaciones {
+  id      String   @id @default(uuid())
+  lead_id String
+  mensaje String
+  rol     String   // "user" | "assistant" | "system"
+  fecha   DateTime @default(now())
+  lead    leads    @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@index([lead_id])
+  @@index([fecha])
+}
+
+// ============================================
+// AGENTES - AI agents configuration
+// ============================================
+model agentes {
+  id          String   @id @default(uuid())
+  nombre      String
+  motor       String   @default("ollama")
+  version     String?
+  prompt_base String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  leads       leads[]
+}
+
+// ============================================
+// CRM WEBHOOKS - Incoming webhook log
+// ============================================
+model crm_webhooks {
+  id      String   @id @default(uuid())
+  origen  String   // "whatsapp" | "web_chat" | "api_externa"
+  payload Json?
+  fecha   DateTime @default(now())
+
+  @@index([origen])
+  @@index([fecha])
+}
+
+// ============================================
+// HISTORICO CONVERSACIONAL - 15-day conversation summaries
+// ============================================
+model historico_conversacional {
+  id                  String   @id @default(uuid())
+  lead_id             String   @unique
+  resumen_15_dias     String?
+  fecha_actualizacion DateTime @default(now())
+  lead                leads    @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@index([lead_id])
+}
+
+// ============================================
+// PRODUCTOS - Product catalog
+// ============================================
+model productos {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String?
+  precio      Decimal? @db.Decimal(10, 2)
+  categoria   String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([categoria])
+  @@index([activo])
 }
