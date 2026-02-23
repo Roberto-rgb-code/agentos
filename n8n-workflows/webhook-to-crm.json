@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extraer datos del webhook de WhatsApp\n// Adapta los campos según el formato de tu proveedor (Meta, Twilio, etc.)\nconst body = $input.first().json.body || $input.first().json;\n\nconst lead = {\n  name: body.name || body.profile_name || body.from || 'Sin nombre',\n  phone: body.phone || body.from || body.wa_id || '',\n  email: body.email || '',\n  ciudad: body.city || body.ciudad || '',\n  source: 'WHATSAPP',\n  status: 'NEW',\n  interes: body.message || body.text || body.interes || 'Consulta via WhatsApp',\n  etapa: 'NUEVO_CLIENTE',\n  probabilidad_cierre: 25\n};\n\nreturn [{ json: lead }];"
+        "jsCode": "// Extraer datos del webhook de WhatsApp\nconst body = $input.first().json.body || $input.first().json;\n\nconst output = {\n  origen: 'WHATSAPP',\n  lead_data: {\n    name: body.name || body.profile_name || body.from || 'Sin nombre',\n    phone: body.phone || body.from || body.wa_id || '',\n    email: body.email || '',\n    ciudad: body.city || body.ciudad || '',\n    interes: body.message || body.text || body.interes || 'Consulta via WhatsApp',\n    etapa: 'NUEVO_CLIENTE',\n    mensaje: body.message || body.text || ''\n  }\n};\n\nreturn [{ json: output }];"
       },
       "id": "code-node",
       "name": "Procesar Datos",
@@ -27,17 +27,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:3001/api/crm/leads",
+        "url": "http://host.docker.internal:3001/api/crm/webhook/incoming",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer {{$env.AGENTOS_API_TOKEN}}"
             }
           ]
         },
@@ -114,4 +110,3 @@
     }
   ]
 }
-

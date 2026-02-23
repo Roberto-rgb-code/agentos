@@ -28,7 +28,7 @@ async function main() {
         {
           database_id: "agentos-crm",
           engine: "postgresql",
-          connectionString: `postgresql://${process.env.DB_USER || "anythingllm"}:${process.env.DB_PASS || "anythingllm"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_NAME || "anythingllm_dev"}`,
+          connectionString: `postgresql://${process.env.DB_USER || "agentos"}:${process.env.DB_PASS || "agentos"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_NAME || "agentos_dev"}`,
         },
       ]),
     },
