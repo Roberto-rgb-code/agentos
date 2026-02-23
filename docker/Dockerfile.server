@@ -1,0 +1,35 @@
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+# Instalar dependencias del sistema necesarias para prisma y bcrypt
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    curl
+
+# Copiar archivos de dependencias
+COPY server/package.json server/yarn.lock* ./
+
+# Instalar dependencias
+RUN yarn install --production=false --network-timeout 100000 && yarn cache clean
+
+# Copiar código del servidor
+COPY server/ ./
+
+# Generar Prisma Client
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Exponer puerto
+EXPOSE 3001
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3001/api/ping || exit 1
+
+# Entrypoint: migrar DB y arrancar servidor
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=./prisma/schema.prisma && node index.js"]
+

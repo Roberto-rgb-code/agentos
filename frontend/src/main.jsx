@@ -372,6 +372,39 @@ const router = createBrowserRouter([
           return { element: <ManagerRoute Component={MobileConnections} /> };
         },
       },
+      // CRM routes
+      {
+        path: "/crm/leads",
+        lazy: async () => {
+          const { default: CRMLeads } = await import("@/pages/CRM/Leads");
+          return { element: <PrivateRoute Component={CRMLeads} /> };
+        },
+      },
+      {
+        path: "/crm/leads/:id",
+        lazy: async () => {
+          const { default: CRMLeadDetail } = await import(
+            "@/pages/CRM/LeadDetail"
+          );
+          return { element: <PrivateRoute Component={CRMLeadDetail} /> };
+        },
+      },
+      // Analytics route (Premium only)
+      {
+        path: "/analytics",
+        lazy: async () => {
+          const { default: Analytics } = await import("@/pages/Analytics");
+          return { element: <PrivateRoute Component={Analytics} /> };
+        },
+      },
+      // Workflows (n8n) route
+      {
+        path: "/workflows",
+        lazy: async () => {
+          const { default: Workflows } = await import("@/pages/Workflows");
+          return { element: <PrivateRoute Component={Workflows} /> };
+        },
+      },
       // Catch-all route for 404s
       {
         path: "*",

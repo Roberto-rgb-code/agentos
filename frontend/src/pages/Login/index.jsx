@@ -17,7 +17,8 @@ import useSimpleSSO from "@/hooks/useSimpleSSO";
 export default function Login() {
   const query = useQuery();
   const { loading: ssoLoading, ssoConfig } = useSimpleSSO();
-  const { loading, requiresAuth, mode } = usePasswordModal(!!query.get("nt"));
+  const notry = !!query.get("nt"); // Si viene con ?nt=1, forzar mostrar login
+  const { loading, requiresAuth, mode } = usePasswordModal(notry);
 
   if (loading || ssoLoading) return <FullScreenLoader />;
 
@@ -30,7 +31,9 @@ export default function Login() {
     else return <Navigate to={paths.sso.login()} />;
   }
 
-  if (requiresAuth === false) return <Navigate to={paths.home()} />;
+  // Si viene con ?nt=1 (notry), siempre mostrar el login aunque requiresAuth sea false
+  // Esto permite forzar el login después de logout
+  if (requiresAuth === false && !notry) return <Navigate to={paths.home()} />;
 
   return <PasswordModal mode={mode} />;
 }

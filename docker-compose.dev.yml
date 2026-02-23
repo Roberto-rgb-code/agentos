@@ -1,0 +1,117 @@
+services:
+  # ============================================
+  # PostgreSQL - Base de datos
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: agentos-postgres
+    environment:
+      POSTGRES_USER: agentos
+      POSTGRES_PASSWORD: agentos
+      POSTGRES_DB: agentos_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentos -d agentos_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - agentos-net
+    restart: unless-stopped
+
+  # ============================================
+  # Backend - Node.js API Server
+  # ============================================
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    container_name: agentos-server
+    environment:
+      NODE_ENV: production
+      SERVER_PORT: 3001
+      DATABASE_URL: "postgresql://agentos:agentos@postgres:5432/agentos_dev"
+      JWT_SECRET: "agentos-secret-change-in-production"
+      LLM_PROVIDER: ollama
+      OLLAMA_BASE_PATH: http://host.docker.internal:11434
+      OLLAMA_MODEL_PREF: llama3.1:8b
+      EMBEDDING_ENGINE: ollama
+      EMBEDDING_BASE_PATH: http://host.docker.internal:11434
+      EMBEDDING_MODEL_PREF: nomic-embed-text
+      STORAGE_DIR: /app/storage
+    ports:
+      - "3001:3001"
+    volumes:
+      - server_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - agentos-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # ============================================
+  # Frontend - React + Nginx
+  # ============================================
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: agentos-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    networks:
+      - agentos-net
+    restart: unless-stopped
+
+  # ============================================
+  # n8n - Workflow Automation
+  # ============================================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: agentos-n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      # Conectar n8n a la misma DB de Agentos
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=agentos_dev
+      - DB_POSTGRESDB_USER=agentos
+      - DB_POSTGRESDB_PASSWORD=agentos
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - agentos-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  server_storage:
+  n8n_data:
+
+networks:
+  agentos-net:
+    driver: bridge

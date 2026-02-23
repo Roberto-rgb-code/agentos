@@ -229,4 +229,10 @@ export default {
       manage: () => `/settings/beta-features/live-document-sync/manage`,
     },
   },
+  crm: {
+    leads: () => `/crm/leads`,
+    lead: (id) => `/crm/leads/${id}`,
+  },
+  analytics: () => `/analytics`,
+  workflows: () => `/workflows`,
 };

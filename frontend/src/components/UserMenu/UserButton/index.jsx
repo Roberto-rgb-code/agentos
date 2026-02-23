@@ -60,7 +60,9 @@ export default function UserButton() {
     fetchSupportEmail();
   }, []);
 
-  if (mode === null) return null;
+  // Siempre mostrar el botón si hay sesión activa
+  const hasSession = !!window.localStorage.getItem(AUTH_TOKEN);
+  if (!hasSession && mode === null) return null;
   return (
     <div className="absolute top-3 right-4 md:top-9 md:right-10 w-fit h-fit z-40">
       <button
@@ -99,7 +101,7 @@ export default function UserButton() {
                 window.localStorage.removeItem(AUTH_TIMESTAMP);
                 window.localStorage.removeItem(LAST_VISITED_WORKSPACE);
                 window.localStorage.removeItem(USER_PROMPT_INPUT_MAP);
-                window.location.replace(paths.home());
+                window.location.replace(paths.login(true));
               }}
               type="button"
               className="text-white hover:bg-theme-action-menu-item-hover w-full text-left px-4 py-1.5 rounded-md"

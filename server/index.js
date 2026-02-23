@@ -30,6 +30,9 @@ const { agentFlowEndpoints } = require("./endpoints/agentFlows");
 const { mcpServersEndpoints } = require("./endpoints/mcpServers");
 const { mobileEndpoints } = require("./endpoints/mobile");
 const { webPushEndpoints } = require("./endpoints/webPush");
+const { crmEndpoints } = require("./endpoints/crm");
+const { analyticsEndpoints } = require("./endpoints/analytics");
+const { integrationsEndpoints } = require("./endpoints/integrations");
 const { httpLogger } = require("./middleware/httpLogger");
 const app = express();
 const apiRouter = express.Router();
@@ -81,6 +84,10 @@ agentFlowEndpoints(apiRouter);
 mcpServersEndpoints(apiRouter);
 mobileEndpoints(apiRouter);
 webPushEndpoints(apiRouter);
+// CRM and Sales endpoints
+crmEndpoints(apiRouter);
+analyticsEndpoints(apiRouter);
+integrationsEndpoints(apiRouter);
 // Externally facing embedder endpoints
 embeddedEndpoints(apiRouter);
 

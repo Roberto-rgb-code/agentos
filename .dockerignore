@@ -1,18 +1,50 @@
-**/server/utils/agents/aibitat/example/**
-**/server/storage/documents/**
-**/server/storage/vector-cache/**
-**/server/storage/*.db
-**/server/storage/lancedb
-**/collector/hotdir/**
-**/collector/outputs/**
-**/node_modules/
-**/dist/
-**/v-env/
-**/__pycache__/
-**/.env
-**/.env.*
-**/bundleinspector.html
-**/tmp/**
-**/.log
-!docker/.env.example
-!frontend/.env.production
+# Node modules
+node_modules
+**/node_modules
+
+# Git
+.git
+.gitignore
+.gitmodules
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+frontend/dist
+electron/dist
+
+# Environment files (se inyectan via docker-compose)
+.env
+.env.*
+!.env.example
+
+# Tests
+__tests__
+*.test.js
+*.spec.js
+
+# Documentation (no necesaria en imagen)
+*.md
+docs/
+
+# Misc
+*.bak
+bundleinspector.html
+cloud-deployments/
+.devcontainer/
+.github/
+browser-extension/

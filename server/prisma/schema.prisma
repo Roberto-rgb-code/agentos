@@ -2,17 +2,26 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Uncomment the following lines and comment out the SQLite datasource block above to use PostgreSQL
-// Make sure to set the correct DATABASE_URL in your .env file
-// After swapping run `yarn prisma:setup` from the root directory to migrate the database
+// ============================================
+// DATASOURCE CONFIGURATION
+// ============================================
+// Para desarrollo con CRM: usa PostgreSQL
+// Para desarrollo simple: usa SQLite
+//
+// Para cambiar a PostgreSQL:
+// 1. Comenta el bloque datasource db con sqlite
+// 2. Descomenta el bloque datasource db con postgresql
+// 3. Configura DATABASE_URL en server/.env.development:
+//    DATABASE_URL="postgresql://anythingllm:anythingllm@localhost:5432/anythingllm_dev"
+// 4. Ejecuta: yarn prisma:migrate
 //
 // datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
+//   provider = "sqlite"
+//   url      = "file:../storage/anythingllm.db"
 // }
 datasource db {
-  provider = "sqlite"
-  url      = "file:../storage/anythingllm.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model api_keys {
@@ -70,6 +79,7 @@ model users {
   dailyMessageLimit            Int?
   bio                          String?                       @default("")
   web_push_subscription_config String?
+  plan                         String                        @default("basic") // basic or premium
   workspace_chats              workspace_chats[]
   workspace_users              workspace_users[]
   embed_configs                embed_configs[]
@@ -85,6 +95,8 @@ model users {
   prompt_history               prompt_history[]
   desktop_mobile_devices       desktop_mobile_devices[]
   workspace_parsed_files       workspace_parsed_files[]
+  leads                        leads[]
+  integration_api_keys         integration_api_keys[]
 }
 
 model recovery_codes {
@@ -392,4 +404,93 @@ model workspace_parsed_files {
 
   @@index([workspaceId])
   @@index([userId])
+}
+
+// ============================================
+// Integration API Keys (for webhooks/external integrations)
+// ============================================
+
+model integration_api_keys {
+  id            String   @id @default(uuid())
+  key           String   @unique
+  name          String   // Human-readable name (e.g., "n8n WhatsApp Integration")
+  user_id       Int      // Owner user (must be premium)
+  plan_required String   @default("premium") // Plan required to use this key
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  lastUsedAt    DateTime?
+  user          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([user_id])
+}
+
+// ============================================
+// CRM / Sales Module Models
+// ============================================
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+}
+
+enum LeadEventType {
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  PURCHASE
+  REGISTRATION
+  RESERVATION
+}
+
+model leads {
+  id            String        @id @default(uuid())
+  owner_user_id Int
+  name          String
+  phone         String?
+  email         String?
+  source        String?       @default("MANUAL")
+  status        LeadStatus    @default(NEW)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          users         @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  events        lead_events[]
+  messages      whatsapp_messages[]
+
+  @@index([owner_user_id])
+  @@index([status])
+  @@index([phone])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model lead_events {
+  id        String         @id @default(uuid())
+  lead_id   String
+  type      LeadEventType
+  revenue   Decimal?       @db.Decimal(10, 2)
+  meta      Json?          // JSON object for additional metadata
+  createdAt DateTime       @default(now())
+  lead      leads          @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@index([lead_id])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model whatsapp_messages {
+  id            String   @id @default(uuid())
+  lead_id       String?
+  wa_from       String   // WhatsApp phone number (normalized)
+  wa_message_id String   @unique
+  body          String
+  raw           Json?    // JSON object for raw webhook payload
+  received_at   DateTime @default(now())
+  lead          leads?   @relation(fields: [lead_id], references: [id], onDelete: SetNull)
+
+  @@index([lead_id])
+  @@index([wa_from])
+  @@index([received_at])
 }

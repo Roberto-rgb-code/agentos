@@ -12,6 +12,7 @@ import {
   Nut,
   Toolbox,
   Globe,
+  SignOut,
 } from "@phosphor-icons/react";
 import useUser from "@/hooks/useUser";
 import { isMobile } from "react-device-detect";
@@ -23,6 +24,13 @@ import System from "@/models/system";
 import Option from "./MenuOption";
 import { CanViewChatHistoryProvider } from "../CanViewChatHistory";
 import useAppVersion from "@/hooks/useAppVersion";
+import {
+  AUTH_TIMESTAMP,
+  AUTH_TOKEN,
+  AUTH_USER,
+  LAST_VISITED_WORKSPACE,
+  USER_PROMPT_INPUT_MAP,
+} from "@/utils/constants";
 
 export default function SettingsSidebar() {
   const { t } = useTranslation();
@@ -161,6 +169,7 @@ export default function SettingsSidebar() {
                 <div className="flex flex-col gap-y-2 pb-[60px] overflow-y-scroll no-scroll">
                   <SidebarOptions user={user} t={t} />
                   <div className="h-[1.5px] bg-[#3D4147] mx-3 mt-[14px]" />
+                  <LogoutButton />
                   <SupportEmail />
                   <Link
                     hidden={
@@ -465,6 +474,28 @@ function HoldToReveal({ children, holdForMs = 3_000 }) {
 
   if (!showing) return null;
   return children;
+}
+
+function LogoutButton() {
+  const { t } = useTranslation();
+  const handleLogout = () => {
+    window.localStorage.removeItem(AUTH_USER);
+    window.localStorage.removeItem(AUTH_TOKEN);
+    window.localStorage.removeItem(AUTH_TIMESTAMP);
+    window.localStorage.removeItem(LAST_VISITED_WORKSPACE);
+    window.localStorage.removeItem(USER_PROMPT_INPUT_MAP);
+    window.location.replace(paths.login(true));
+  };
+
+  return (
+    <button
+      onClick={handleLogout}
+      className="flex items-center gap-3 px-3 py-2 mx-3 mt-2 rounded-lg text-theme-text-secondary hover:bg-theme-bg-primary hover:text-theme-text-primary transition-colors text-sm"
+    >
+      <SignOut className="h-5 w-5 flex-shrink-0" />
+      <span>{t("profile_settings.signout") || "Sign out"}</span>
+    </button>
+  );
 }
 
 function AppVersion() {

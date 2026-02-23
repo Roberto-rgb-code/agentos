@@ -1,94 +1,118 @@
 {
-  // See https://go.microsoft.com/fwlink/?LinkId=733558
-  // for the documentation about the tasks.json format
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Check Node Version",
       "type": "shell",
-      "options": {
-        "cwd": "${workspaceFolder}/collector",
-        "statusbar": {
-          "color": "#ffea00",
-          "detail": "Runs the collector",
-          "label": "Collector: $(play) run",
-          "running": {
-            "color": "#ffea00",
-            "label": "Collector: $(gear~spin) running"
-          }
-        }
-      },
-      "command": "cd ${workspaceFolder}/collector/ && yarn dev",
-      "runOptions": {
-        "instanceLimit": 1,
-        "reevaluateOnRerun": true
-      },
+      "command": "node -v | grep -q 'v20' && echo '✅ Node.js v20 detectado' || (echo '❌ Node.js v20 requerido. Ejecuta: nvm use 20' && exit 1)",
+      "problemMatcher": [],
       "presentation": {
-        "echo": true,
         "reveal": "always",
-        "focus": false,
         "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
+        "focus": false,
+        "clear": true
       },
-      "label": "Collector: run"
+      "runOptions": {
+        "runOn": "default"
+      }
     },
     {
+      "label": "Dev Bootstrap",
       "type": "shell",
-      "options": {
-        "cwd": "${workspaceFolder}/server",
-        "statusbar": {
-          "color": "#ffea00",
-          "detail": "Runs the server",
-          "label": "Server: $(play) run",
-          "running": {
-            "color": "#ffea00",
-            "label": "Server: $(gear~spin) running"
-          }
-        }
-      },
-      "command": "if [ \"${CODESPACES}\" = \"true\" ]; then while ! gh codespace ports -c $CODESPACE_NAME | grep 3001; do sleep 1; done; gh codespace ports visibility 3001:public -c $CODESPACE_NAME; fi & cd ${workspaceFolder}/server/ && yarn dev",
-      "runOptions": {
-        "instanceLimit": 1,
-        "reevaluateOnRerun": true
-      },
+      "command": "yarn dev:bootstrap",
+      "problemMatcher": [],
       "presentation": {
-        "echo": true,
         "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true,
+        "group": "dev"
       },
-      "label": "Server: run"
+      "runOptions": {
+        "runOn": "default"
+      },
+      "dependsOn": "Check Node Version"
     },
     {
+      "label": "Dev Server",
       "type": "shell",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend",
-        "statusbar": {
-          "color": "#ffea00",
-          "detail": "Runs the frontend",
-          "label": "Frontend: $(play) run",
-          "running": {
-            "color": "#ffea00",
-            "label": "Frontend: $(gear~spin) running"
-          }
-        }
-      },
-      "command": "cd ${workspaceFolder}/frontend/ && yarn dev",
-      "runOptions": {
-        "instanceLimit": 1,
-        "reevaluateOnRerun": true
-      },
+      "command": "yarn dev:server",
+      "problemMatcher": [],
       "presentation": {
-        "echo": true,
         "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true,
+        "group": "dev"
       },
-      "label": "Frontend: run"
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "default"
+      }
+    },
+    {
+      "label": "Dev Frontend",
+      "type": "shell",
+      "command": "yarn dev:frontend",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true,
+        "group": "dev"
+      },
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "default"
+      }
+    },
+    {
+      "label": "Dev Collector",
+      "type": "shell",
+      "command": "yarn dev:collector",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true,
+        "group": "dev"
+      },
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "default"
+      }
+    },
+    {
+      "label": "Dev Smoke Test",
+      "type": "shell",
+      "command": "yarn dev:smoketest",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true,
+        "group": "dev"
+      },
+      "runOptions": {
+        "runOn": "default"
+      }
+    },
+    {
+      "label": "Dev All Services",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "Dev Server",
+        "Dev Frontend",
+        "Dev Collector"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     }
   ]
 }
