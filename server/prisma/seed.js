@@ -11,6 +11,27 @@ async function main() {
     { label: "multi_user_mode", value: "true" },
     { label: "logo_filename", value: "anything-llm.png" },
     { label: "users_can_delete_workspaces", value: "true" },
+    { label: "onboarding_complete", value: "true" },
+    {
+      label: "default_agent_skills",
+      value: JSON.stringify([
+        "web-browsing",
+        "save-file-to-browser",
+        "chat-history",
+        "create-chart",
+        "sql-agent",
+      ]),
+    },
+    {
+      label: "agent_sql_connections",
+      value: JSON.stringify([
+        {
+          database_id: "agentos-crm",
+          engine: "postgresql",
+          connectionString: `postgresql://${process.env.DB_USER || "anythingllm"}:${process.env.DB_PASS || "anythingllm"}@${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "5432"}/${process.env.DB_NAME || "anythingllm_dev"}`,
+        },
+      ]),
+    },
   ];
 
   for (let setting of settings) {

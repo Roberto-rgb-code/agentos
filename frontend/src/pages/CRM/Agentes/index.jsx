@@ -3,7 +3,9 @@ import Sidebar from "@/components/SettingsSidebar";
 import { isMobile } from "react-device-detect";
 import * as Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { Robot, MagnifyingGlass, Plus, Gear } from "@phosphor-icons/react";
+import { Robot, MagnifyingGlass, Plus, Gear, ArrowLeft } from "@phosphor-icons/react";
+import { useNavigate } from "react-router-dom";
+import paths from "@/utils/paths";
 import CRM from "@/models/crm";
 import { useModal } from "@/hooks/useModal";
 import ModalWrapper from "@/components/ModalWrapper";
@@ -11,6 +13,7 @@ import CTAButton from "@/components/lib/CTAButton";
 import showToast from "@/utils/toast";
 
 export default function CRMAgentes() {
+  const navigate = useNavigate();
   const { isOpen, openModal, closeModal } = useModal();
   const [agentes, setAgentes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +67,12 @@ export default function CRMAgentes() {
         <div className="flex flex-col w-full px-1 md:pl-6 md:pr-[50px] md:py-6 py-16">
           <div className="w-full flex flex-col gap-y-1 pb-6 border-white/10 border-b-2">
             <div className="items-center flex gap-x-4">
+              <button
+                onClick={() => navigate(paths.home())}
+                className="p-2 rounded-lg text-theme-text-secondary hover:text-white hover:bg-theme-bg-primary transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
               <p className="text-lg leading-6 font-bold text-theme-text-primary">
                 Agentes IA
               </p>

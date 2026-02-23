@@ -3,7 +3,7 @@ import Sidebar from "@/components/SettingsSidebar";
 import { isMobile } from "react-device-detect";
 import * as Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { UserPlus, MagnifyingGlass, FunnelSimple } from "@phosphor-icons/react";
+import { UserPlus, MagnifyingGlass, FunnelSimple, ArrowLeft } from "@phosphor-icons/react";
 import CRM from "@/models/crm";
 import { useNavigate } from "react-router-dom";
 import paths from "@/utils/paths";
@@ -86,6 +86,12 @@ export default function CRMLeads() {
           {/* Header */}
           <div className="w-full flex flex-col gap-y-1 pb-6 border-white/10 border-b-2">
             <div className="items-center flex gap-x-4">
+              <button
+                onClick={() => navigate(paths.home())}
+                className="p-2 rounded-lg text-theme-text-secondary hover:text-white hover:bg-theme-bg-primary transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
               <p className="text-lg leading-6 font-bold text-theme-text-primary">
                 CRM - Pipeline Comercial
               </p>

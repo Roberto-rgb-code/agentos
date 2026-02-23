@@ -1,0 +1,117 @@
+{
+  "name": "WhatsApp Webhook → CRM Lead",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraer datos del webhook de WhatsApp\n// Adapta los campos según el formato de tu proveedor (Meta, Twilio, etc.)\nconst body = $input.first().json.body || $input.first().json;\n\nconst lead = {\n  name: body.name || body.profile_name || body.from || 'Sin nombre',\n  phone: body.phone || body.from || body.wa_id || '',\n  email: body.email || '',\n  ciudad: body.city || body.ciudad || '',\n  source: 'WHATSAPP',\n  status: 'NEW',\n  interes: body.message || body.text || body.interes || 'Consulta via WhatsApp',\n  etapa: 'NUEVO_CLIENTE',\n  probabilidad_cierre: 25\n};\n\nreturn [{ json: lead }];"
+      },
+      "id": "code-node",
+      "name": "Procesar Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3001/api/crm/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.AGENTOS_API_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "http-node",
+      "name": "Crear Lead en CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, lead: $json }) }}",
+        "options": {}
+      },
+      "id": "response-node",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [910, 300]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Procesar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Datos": {
+      "main": [
+        [
+          {
+            "node": "Crear Lead en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Lead en CRM": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "CRM",
+      "id": "crm-tag"
+    },
+    {
+      "name": "WhatsApp",
+      "id": "whatsapp-tag"
+    }
+  ]
+}
+

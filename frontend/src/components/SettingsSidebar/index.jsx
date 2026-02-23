@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import paths from "@/utils/paths";
-import useLogo from "@/hooks/useLogo";
 import {
   House,
   List,
@@ -34,7 +33,6 @@ import {
 
 export default function SettingsSidebar() {
   const { t } = useTranslation();
-  const { logo } = useLogo();
   const { user } = useUser();
   const sidebarRef = useRef(null);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -64,12 +62,7 @@ export default function SettingsSidebar() {
             <List className="h-6 w-6" />
           </button>
           <div className="flex items-center justify-center flex-grow">
-            <img
-              src={logo}
-              alt="Logo"
-              className="block mx-auto h-6 w-auto"
-              style={{ maxHeight: "40px", objectFit: "contain" }}
-            />
+            <span className="text-white font-bold text-xl tracking-wide">Agentos</span>
           </div>
           <div className="w-12"></div>
         </div>
@@ -95,12 +88,7 @@ export default function SettingsSidebar() {
               {/* Header Information */}
               <div className="flex w-full items-center justify-between gap-x-4">
                 <div className="flex shrink-1 w-fit items-center justify-start">
-                  <img
-                    src={logo}
-                    alt="Logo"
-                    className="rounded w-full max-h-[40px]"
-                    style={{ objectFit: "contain" }}
-                  />
+                  <span className="text-white font-bold text-xl tracking-wide">Agentos</span>
                 </div>
                 <div className="flex gap-x-2 items-center text-slate-500 shrink-0">
                   <a
@@ -147,24 +135,16 @@ export default function SettingsSidebar() {
       <div>
         <Link
           to={paths.home()}
-          className="flex shrink-0 max-w-[55%] items-center justify-start mx-[20.5px] my-[18px]"
+          className="flex shrink-0 items-center justify-start mx-[20.5px] my-[18px]"
         >
-          <img
-            src={logo}
-            alt="Logo"
-            className="rounded max-h-[24px]"
-            style={{ objectFit: "contain" }}
-          />
+          <span className="text-white font-bold text-xl tracking-wide">Agentos</span>
         </Link>
         <div
           ref={sidebarRef}
           className="transition-all duration-500 relative m-[16px] rounded-[16px] bg-theme-bg-sidebar border-[2px] border-theme-sidebar-border light:border-none min-w-[250px] p-[10px] h-[calc(100%-76px)]"
         >
           <div className="w-full h-full flex flex-col overflow-x-hidden items-between min-w-[235px]">
-            <div className="text-theme-text-secondary text-sm font-medium uppercase mt-[4px] mb-0 ml-2">
-              {t("settings.title")}
-            </div>
-            <div className="relative h-[calc(100%-60px)] flex flex-col w-full justify-between pt-[10px] overflow-y-scroll no-scroll">
+            <div className="relative h-[calc(100%-30px)] flex flex-col w-full justify-between pt-[10px] overflow-y-scroll no-scroll">
               <div className="h-auto sidebar-items">
                 <div className="flex flex-col gap-y-2 pb-[60px] overflow-y-scroll no-scroll">
                   <SidebarOptions user={user} t={t} />
@@ -221,210 +201,7 @@ function SupportEmail() {
 }
 
 const SidebarOptions = ({ user = null, t }) => (
-  <CanViewChatHistoryProvider>
-    {({ viewable: canViewChatHistory }) => (
-      <>
-        <Option
-          btnText={t("settings.ai-providers")}
-          icon={<Gear className="h-5 w-5 flex-shrink-0" />}
-          user={user}
-          childOptions={[
-            {
-              btnText: t("settings.llm"),
-              href: paths.settings.llmPreference(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.vector-database"),
-              href: paths.settings.vectorDatabase(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.embedder"),
-              href: paths.settings.embedder.modelPreference(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.text-splitting"),
-              href: paths.settings.embedder.chunkingPreference(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.voice-speech"),
-              href: paths.settings.audioPreference(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.transcription"),
-              href: paths.settings.transcriptionPreference(),
-              flex: true,
-              roles: ["admin"],
-            },
-          ]}
-        />
-        <Option
-          btnText={t("settings.admin")}
-          icon={<UserCircleGear className="h-5 w-5 flex-shrink-0" />}
-          user={user}
-          childOptions={[
-            {
-              btnText: t("settings.users"),
-              href: paths.settings.users(),
-              roles: ["admin", "manager"],
-            },
-            {
-              btnText: t("settings.workspaces"),
-              href: paths.settings.workspaces(),
-              roles: ["admin", "manager"],
-            },
-            {
-              hidden: !canViewChatHistory,
-              btnText: t("settings.workspace-chats"),
-              href: paths.settings.chats(),
-              flex: true,
-              roles: ["admin", "manager"],
-            },
-            {
-              btnText: t("settings.invites"),
-              href: paths.settings.invites(),
-              roles: ["admin", "manager"],
-            },
-            {
-              btnText: "Default System Prompt",
-              href: paths.settings.defaultSystemPrompt(),
-              flex: true,
-              roles: ["admin"],
-            },
-          ]}
-        />
-        <Option
-          btnText={t("settings.agent-skills")}
-          icon={<Robot className="h-5 w-5 flex-shrink-0" />}
-          href={paths.settings.agentSkills()}
-          user={user}
-          flex={true}
-          roles={["admin"]}
-        />
-        <Option
-          btnText="Community Hub"
-          icon={<Globe className="h-5 w-5 flex-shrink-0" />}
-          childOptions={[
-            {
-              btnText: "Explore Trending",
-              href: paths.communityHub.trending(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: "Your Account",
-              href: paths.communityHub.authentication(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: "Import Item",
-              href: paths.communityHub.importItem(),
-              flex: true,
-              roles: ["admin"],
-            },
-          ]}
-        />
-        <Option
-          btnText={t("settings.customization")}
-          icon={<PencilSimpleLine className="h-5 w-5 flex-shrink-0" />}
-          user={user}
-          childOptions={[
-            {
-              btnText: t("settings.interface"),
-              href: paths.settings.interface(),
-              flex: true,
-              roles: ["admin", "manager"],
-            },
-            {
-              btnText: t("settings.branding"),
-              href: paths.settings.branding(),
-              flex: true,
-              roles: ["admin", "manager"],
-            },
-            {
-              btnText: t("settings.chat"),
-              href: paths.settings.chat(),
-              flex: true,
-              roles: ["admin", "manager"],
-            },
-          ]}
-        />
-        <Option
-          btnText={t("settings.tools")}
-          icon={<Toolbox className="h-5 w-5 flex-shrink-0" />}
-          user={user}
-          childOptions={[
-            {
-              hidden: !canViewChatHistory,
-              btnText: t("settings.embeds"),
-              href: paths.settings.embedChatWidgets(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.event-logs"),
-              href: paths.settings.logs(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.api-keys"),
-              href: paths.settings.apiKeys(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.system-prompt-variables"),
-              href: paths.settings.systemPromptVariables(),
-              flex: true,
-              roles: ["admin"],
-            },
-            {
-              btnText: t("settings.browser-extension"),
-              href: paths.settings.browserExtension(),
-              flex: true,
-              roles: ["admin", "manager"],
-            },
-            {
-              btnText: t("settings.mobile-app"),
-              href: paths.settings.mobile(),
-              flex: true,
-              roles: ["admin"],
-            },
-          ]}
-        />
-        <Option
-          btnText={t("settings.security")}
-          icon={<Nut className="h-5 w-5 flex-shrink-0" />}
-          href={paths.settings.security()}
-          user={user}
-          flex={true}
-          roles={["admin", "manager"]}
-          hidden={user?.role}
-        />
-        <HoldToReveal key="exp_features">
-          <Option
-            btnText={t("settings.experimental-features")}
-            icon={<Flask className="h-5 w-5 flex-shrink-0" />}
-            href={paths.settings.experimental()}
-            user={user}
-            flex={true}
-            roles={["admin"]}
-          />
-        </HoldToReveal>
-      </>
-    )}
-  </CanViewChatHistoryProvider>
+  <></>
 );
 
 function HoldToReveal({ children, holdForMs = 3_000 }) {
