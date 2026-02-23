@@ -24,6 +24,50 @@ services:
     restart: unless-stopped
 
   # ============================================
+  # Ollama - LLM local (IA)
+  # ============================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentos-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - agentos-net
+    restart: unless-stopped
+
+  # ============================================
+  # Ollama Model Loader - Descarga modelos automaticamente
+  # ============================================
+  ollama-models:
+    image: ollama/ollama:latest
+    container_name: agentos-ollama-models
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "⏳ Descargando modelo LLM: llama3.1:8b ..."
+        ollama pull llama3.1:8b
+        echo "✅ llama3.1:8b listo"
+        echo "⏳ Descargando modelo embeddings: nomic-embed-text ..."
+        ollama pull nomic-embed-text
+        echo "✅ nomic-embed-text listo"
+        echo "🎉 Todos los modelos descargados!"
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    networks:
+      - agentos-net
+
+  # ============================================
   # Backend - Node.js API Server
   # ============================================
   server:
@@ -37,10 +81,10 @@ services:
       DATABASE_URL: "postgresql://agentos:agentos@postgres:5432/agentos_dev"
       JWT_SECRET: "agentos-secret-change-in-production"
       LLM_PROVIDER: ollama
-      OLLAMA_BASE_PATH: http://host.docker.internal:11434
+      OLLAMA_BASE_PATH: http://ollama:11434
       OLLAMA_MODEL_PREF: llama3.1:8b
       EMBEDDING_ENGINE: ollama
-      EMBEDDING_BASE_PATH: http://host.docker.internal:11434
+      EMBEDDING_BASE_PATH: http://ollama:11434
       EMBEDDING_MODEL_PREF: nomic-embed-text
       STORAGE_DIR: /app/storage
       SEED_ADMIN_EMAIL: admin
@@ -52,10 +96,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ollama:
+        condition: service_healthy
     networks:
       - agentos-net
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   # ============================================
@@ -105,14 +149,13 @@ services:
         condition: service_healthy
     networks:
       - agentos-net
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
 volumes:
   postgres_data:
   server_storage:
   n8n_data:
+  ollama_data:
 
 networks:
   agentos-net:
