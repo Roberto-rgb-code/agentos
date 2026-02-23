@@ -2,20 +2,19 @@
 
 **AI-powered Desktop CRM con Workflow Automation — 100% Local**
 
-Aplicación que integra chatbot con IA (Ollama), CRM, gestión de productos, agentes IA y automatización de workflows (n8n). Todo corre localmente en tu máquina.
+Aplicación de escritorio que integra chatbot con IA (Ollama), CRM, gestión de productos, agentes IA y automatización de workflows (n8n). Todo corre localmente en tu máquina.
 
 ---
 
 ## 📋 Requisitos previos
 
 - **Docker Desktop** (v4.0+) — [docker.com](https://www.docker.com/products/docker-desktop/)
+- **Node.js 20** — [nodejs.org](https://nodejs.org/)
 - **Git** — [git-scm.com](https://git-scm.com/)
-
-Eso es todo. No necesitas instalar Node.js, PostgreSQL, ni nada más.
 
 ---
 
-## 🚀 Instalación (2 comandos)
+## 🚀 Instalación
 
 ### 1. Clonar el repositorio
 
@@ -24,80 +23,86 @@ git clone https://github.com/Roberto-rgb-code/agentos.git
 cd agentos
 ```
 
-### 2. Levantar todo
+### 2. Levantar los servicios (Docker)
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
-Esto automáticamente:
-- ✅ Levanta **PostgreSQL** (base de datos)
-- ✅ Levanta **Ollama** y descarga los modelos de IA (llama3.1:8b + nomic-embed-text)
-- ✅ Levanta el **Backend** (Node.js + Prisma), ejecuta migraciones y crea datos de ejemplo
-- ✅ Levanta el **Frontend** (React + Nginx)
-- ✅ Levanta **n8n** (workflow automation)
+Esto levanta automáticamente:
+- ✅ **PostgreSQL** — base de datos
+- ✅ **Ollama** — IA local + descarga modelos (llama3.1:8b, nomic-embed-text)
+- ✅ **Backend** — API Node.js + migraciones + datos de ejemplo
+- ✅ **Frontend** — React + Nginx
+- ✅ **n8n** — workflow automation
 
 > ⏳ La primera vez tarda ~10-15 minutos porque descarga imágenes Docker y modelos de IA.
 
-### 3. Abrir la app
+### 3. Instalar Electron (solo la primera vez)
 
-Abre en tu navegador: **http://localhost:3000**
+```bash
+cd electron
+npm install
+cd ..
+```
 
----
+### 4. Abrir la app de escritorio
 
-## 🔐 Credenciales
+```bash
+cd electron
+npm run dev
+```
 
-### Login de Agentos
+Se abre la ventana de **Agentos** como app nativa de escritorio.
+
+### 5. Login
+
 | Campo | Valor |
 |-------|-------|
 | **Usuario** | `admin` |
 | **Contraseña** | `admin123` |
 
-### Login de n8n (Workflows)
-| Campo | Valor |
-|-------|-------|
-| **Email** | `admin@agentos.local` |
-| **Contraseña** | `Admin123!` |
+---
+
+## 🔐 Credenciales
+
+### Agentos (app principal)
+- **Usuario:** `admin`
+- **Contraseña:** `admin123`
+
+### n8n (Workflows)
+- **Email:** `admin@agentos.local`
+- **Contraseña:** `Admin123!`
 
 ---
 
-## 📦 Servicios que levanta Docker
+## 📦 Servicios Docker
 
-| Servicio | Puerto | Contenedor | Descripción |
-|----------|--------|------------|-------------|
-| Frontend | 3000 | agentos-frontend | React UI (nginx) |
-| Backend | 3001 | agentos-server | Node.js API + Prisma |
-| PostgreSQL | 5432 | agentos-postgres | Base de datos |
-| Ollama | 11434 | agentos-ollama | IA local (LLM) |
-| n8n | 5678 | agentos-n8n | Workflow automation |
+| Servicio | Puerto | Contenedor |
+|----------|--------|------------|
+| Frontend | 3000 | agentos-frontend |
+| Backend | 3001 | agentos-server |
+| PostgreSQL | 5432 | agentos-postgres |
+| Ollama (IA) | 11434 | agentos-ollama |
+| n8n | 5678 | agentos-n8n |
 
 ---
 
-## 🔄 Configurar el Workflow de n8n (WhatsApp → CRM)
+## 🔄 Configurar el Workflow (WhatsApp → CRM)
 
-### Paso 1: Abrir n8n
-1. En la app, haz click en **Workflows** en el sidebar izquierdo
-2. Inicia sesión con las credenciales de n8n
+### Paso 1: Abrir Workflows
+En la app, haz click en **Workflows** en el sidebar izquierdo e inicia sesión en n8n.
 
 ### Paso 2: Importar el workflow
-1. En n8n, haz click en los **3 puntos (⋯)** arriba a la derecha
-2. Selecciona **"Import from file"**
-3. Selecciona el archivo del proyecto:
-   ```
-   n8n-workflows/webhook-to-crm.json
-   ```
-4. Se carga un workflow con 4 nodos:
-   - **Webhook WhatsApp** → recibe datos
-   - **Procesar Datos** → transforma los datos
-   - **Crear Lead en CRM** → envía al backend
-   - **Responder OK** → confirma la recepción
+1. Click en los **3 puntos (⋯)** arriba a la derecha
+2. **"Import from file"**
+3. Selecciona: `n8n-workflows/webhook-to-crm.json`
 
 ### Paso 3: Publicar
-1. Haz click en **"Publish"** (arriba a la derecha)
-2. El webhook queda activo en: `http://localhost:5678/webhook/whatsapp-lead`
+Click en **"Publish"** arriba a la derecha. El webhook queda activo.
 
 ### Paso 4: Probar
-Simula un mensaje de WhatsApp:
+Desde una terminal:
 
 ```bash
 curl -X POST http://localhost:5678/webhook/whatsapp-lead \
@@ -111,7 +116,7 @@ curl -X POST http://localhost:5678/webhook/whatsapp-lead \
 ```
 
 ### Paso 5: Verificar
-Ve a **CRM - Leads** en el sidebar → el lead "Juan Perez" aparece con source "WHATSAPP"
+Ve a **CRM - Leads** en el sidebar → aparece "Juan Perez" con source "WHATSAPP".
 
 ---
 
@@ -122,10 +127,10 @@ Para conectar WhatsApp real necesitas exponer el webhook a internet:
 ### 1. Crear un túnel público
 
 ```bash
-# Opción A: ngrok (rápido para pruebas)
+# Opción A: ngrok
 ngrok http 5678
 
-# Opción B: Cloudflare Tunnel (gratis, más estable)
+# Opción B: Cloudflare Tunnel
 cloudflared tunnel --url http://localhost:5678
 ```
 
@@ -144,41 +149,6 @@ En `docker-compose.dev.yml`, cambia:
 ```bash
 docker compose -f docker-compose.dev.yml restart n8n
 ```
-
----
-
-## 🖥️ Modo Desktop (Electron)
-
-Para abrir Agentos como una app de escritorio nativa (se abre como una ventana de app, no en el navegador):
-
-### Requisito adicional
-- **Node.js 20** — [nodejs.org](https://nodejs.org/)
-
-### Pasos
-
-**1. Asegúrate de que Docker está corriendo con todos los servicios:**
-```bash
-docker compose -f docker-compose.dev.yml up --build -d
-```
-
-**2. Instala las dependencias de Electron (solo la primera vez):**
-```bash
-cd electron
-npm install
-```
-
-**3. Abre la app de escritorio:**
-```bash
-npm run dev
-```
-
-Se abrirá una ventana nativa de Agentos con todo integrado: sidebar, CRM, Workflows, Chatbot, etc.
-
-**4. Login:**
-- Usuario: `admin`
-- Contraseña: `admin123`
-
-> 💡 La app de Electron se conecta al frontend (puerto 3000) y al backend (puerto 3001) que corren en Docker. Los servicios Docker deben estar levantados antes de abrir Electron.
 
 ---
 
@@ -204,6 +174,12 @@ Se abrirá una ventana nativa de Agentos con todo integrado: sidebar, CRM, Workf
 │  │  :11434    │                              │
 │  └────────────┘                              │
 └──────────────────────────────────────────────┘
+         │
+         ▼
+┌────────────────┐
+│ Electron App   │  ← App de escritorio
+│ (Desktop)      │
+└────────────────┘
 ```
 
 ---
@@ -216,18 +192,17 @@ Se abrirá una ventana nativa de Agentos con todo integrado: sidebar, CRM, Workf
 | **CRM - Leads** | Gestión de leads con pipeline y conversaciones |
 | **Productos** | Catálogo de productos con precio y stock |
 | **Agentes IA** | Agentes de IA configurables |
-| **Workflows** | n8n embebido para automatización |
+| **Workflows** | n8n para automatización (WhatsApp, webhooks) |
 | **Settings** | Configuración y cerrar sesión |
 
 ---
 
-## 🗄️ Datos de ejemplo incluidos
+## 🗄️ Datos de ejemplo
 
 La DB se inicializa con:
-- **5 leads** (María García, Carlos López, Ana Martínez, Roberto Hernández, Laura Sánchez)
+- **5 leads** con conversaciones y eventos
 - **5 productos** (Plan Básico, Premium, Consultoría, Integración WhatsApp, Soporte)
 - **2 agentes IA** (Agente WhatsApp Ventas, Agente Soporte)
-- **Conversaciones y eventos** de ejemplo
 
 ---
 
@@ -246,7 +221,7 @@ docker compose -f docker-compose.dev.yml restart server
 # Parar todo
 docker compose -f docker-compose.dev.yml down
 
-# Reset completo (borra datos)
+# Reset completo (borra todos los datos)
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up --build -d
 ```
