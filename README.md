@@ -147,15 +147,38 @@ docker compose -f docker-compose.dev.yml restart n8n
 
 ---
 
-## 🖥️ Modo Desktop (Electron) — Opcional
+## 🖥️ Modo Desktop (Electron)
 
-Si quieres usarlo como app de escritorio (requiere Node.js 20):
+Para abrir Agentos como una app de escritorio nativa (se abre como una ventana de app, no en el navegador):
 
+### Requisito adicional
+- **Node.js 20** — [nodejs.org](https://nodejs.org/)
+
+### Pasos
+
+**1. Asegúrate de que Docker está corriendo con todos los servicios:**
+```bash
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+**2. Instala las dependencias de Electron (solo la primera vez):**
 ```bash
 cd electron
 npm install
+```
+
+**3. Abre la app de escritorio:**
+```bash
 npm run dev
 ```
+
+Se abrirá una ventana nativa de Agentos con todo integrado: sidebar, CRM, Workflows, Chatbot, etc.
+
+**4. Login:**
+- Usuario: `admin`
+- Contraseña: `admin123`
+
+> 💡 La app de Electron se conecta al frontend (puerto 3000) y al backend (puerto 3001) que corren en Docker. Los servicios Docker deben estar levantados antes de abrir Electron.
 
 ---
 
