@@ -107,7 +107,7 @@ const TRANSLATIONS = {
   },
   login: {
     "multi-user": {
-      welcome: "Bienvenido a",
+      welcome: "Bienvenido a Agentos",
       "placeholder-username": "Nombre de usuario",
       "placeholder-password": "Contraseña",
       login: "Iniciar sesión",
@@ -115,7 +115,7 @@ const TRANSLATIONS = {
       "forgot-pass": "Olvidé mi contraseña",
       reset: "Restablecer",
     },
-    "sign-in": "Inicia sesión en tu cuenta de {{appName}}.",
+    "sign-in": "",
     "password-reset": {
       title: "Restablecimiento de contraseña",
       description:

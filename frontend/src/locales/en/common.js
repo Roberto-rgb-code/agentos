@@ -118,7 +118,7 @@ const TRANSLATIONS = {
   // Page Definitions
   login: {
     "multi-user": {
-      welcome: "Welcome",
+      welcome: "Welcome to Agentos",
       "placeholder-username": "Username",
       "placeholder-password": "Password",
       login: "Login",
@@ -126,8 +126,7 @@ const TRANSLATIONS = {
       "forgot-pass": "Forgot password",
       reset: "Reset",
     },
-    "sign-in":
-      "Enter your username and password to access your {{appName}} instance.",
+    "sign-in": "",
     "password-reset": {
       title: "Password Reset",
       description:
