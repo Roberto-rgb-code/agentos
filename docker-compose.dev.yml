@@ -34,11 +34,11 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
     networks:
       - agentos-net
     restart: unless-stopped
@@ -95,8 +95,6 @@ services:
       - server_storage:/app/storage
     depends_on:
       postgres:
-        condition: service_healthy
-      ollama:
         condition: service_healthy
     networks:
       - agentos-net
