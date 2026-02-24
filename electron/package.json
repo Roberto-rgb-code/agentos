@@ -37,7 +37,7 @@
           "arch": ["x64", "arm64"]
         }
       ],
-      "icon": "../frontend/public/favicon.png"
+      "icon": "../frontend/dist/anything-llm-icon.png"
     },
     "win": {
       "target": [
@@ -46,7 +46,7 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "../frontend/public/favicon.png"
+      "icon": "../frontend/dist/anything-llm-icon.png"
     },
     "linux": {
       "target": [

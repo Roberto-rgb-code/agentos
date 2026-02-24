@@ -100,9 +100,20 @@ electron/dist/Agentos-{version}.AppImage  # Linux
 **5. Al abrir la app desde el escritorio:**
 - Verifica automáticamente que Docker esté corriendo
 - Levanta los servicios Docker si no están corriendo
-- Abre la ventana de Agentos
+- Muestra una pantalla de carga mientras inicia
+- Abre la ventana de Agentos cuando todo esté listo
 
-> ⚠️ **Importante:** El ejecutable necesita que el proyecto esté clonado en `~/agentos` o en el mismo directorio donde está la app, para encontrar el `docker-compose.dev.yml`.
+> ⚠️ **Importante:** El ejecutable busca el `docker-compose.dev.yml` en estos lugares (en orden):
+> 1. `~/agentos/` (recomendado)
+> 2. `~/Desktop/agentos/`
+> 3. `~/Documents/agentos/`
+> 4. Directorio donde está instalada la app
+> 
+> **Solución más simple:** Clona el proyecto en `~/agentos`:
+> ```bash
+> cd ~
+> git clone https://github.com/Roberto-rgb-code/agentos.git agentos
+> ```
 
 ---
 

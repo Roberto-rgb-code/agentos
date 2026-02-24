@@ -38,28 +38,34 @@ function getProjectRoot() {
   if (isDev) {
     return path.join(__dirname, '../');
   } else {
-    // En producción, buscar el docker-compose en el directorio donde está la app
-    // O en el directorio home del usuario bajo ~/agentos
-    const homeDir = require('os').homedir();
+    // En producción, buscar el docker-compose en varios lugares posibles
+    const homeDir = os.homedir();
+    const desktopDir = path.join(homeDir, 'Desktop');
+    const documentsDir = path.join(homeDir, 'Documents');
+    
     const possiblePaths = [
-      path.join(homeDir, 'agentos'),
-      path.dirname(app.getPath('exe')),
-      path.dirname(process.execPath)
+      path.join(homeDir, 'agentos'), // ~/agentos
+      path.join(desktopDir, 'agentos'), // ~/Desktop/agentos
+      path.join(documentsDir, 'agentos'), // ~/Documents/agentos
+      path.dirname(app.getPath('exe')), // Donde está la app instalada
+      path.dirname(process.execPath), // Donde está el ejecutable
+      process.cwd(), // Directorio actual de trabajo
     ];
     
     // Buscar el primer directorio que tenga docker-compose.dev.yml
     for (const possiblePath of possiblePaths) {
-      const dockerComposePath = path.join(possiblePath, 'docker-compose.dev.yml');
       try {
-        fs.accessSync(dockerComposePath);
-        return possiblePath;
+        const dockerComposePath = path.join(possiblePath, 'docker-compose.dev.yml');
+        if (fs.existsSync(dockerComposePath)) {
+          return possiblePath;
+        }
       } catch (e) {
         // Continuar buscando
       }
     }
     
-    // Si no se encuentra, usar el directorio home
-    return homeDir;
+    // Si no se encuentra, usar ~/agentos (el usuario deberá clonar ahí)
+    return path.join(homeDir, 'agentos');
   }
 }
 
