@@ -55,9 +55,9 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        echo "⏳ Descargando modelo LLM: phi3:mini ..."
-        ollama pull phi3:mini
-        echo "✅ phi3:mini listo"
+        echo "⏳ Descargando modelo LLM: tinyllama ..."
+        ollama pull tinyllama
+        echo "✅ tinyllama listo"
         echo "⏳ Descargando modelo embeddings: nomic-embed-text ..."
         ollama pull nomic-embed-text
         echo "✅ nomic-embed-text listo"
@@ -82,7 +82,7 @@ services:
       JWT_SECRET: "agentos-secret-change-in-production"
       LLM_PROVIDER: ollama
       OLLAMA_BASE_PATH: http://ollama:11434
-      OLLAMA_MODEL_PREF: phi3:mini
+      OLLAMA_MODEL_PREF: tinyllama
       EMBEDDING_ENGINE: ollama
       EMBEDDING_BASE_PATH: http://ollama:11434
       EMBEDDING_MODEL_PREF: nomic-embed-text
