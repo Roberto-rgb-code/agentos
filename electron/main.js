@@ -14,9 +14,40 @@ let splashWindow;
 // Función para verificar si Docker está corriendo
 async function checkDocker() {
   try {
-    await execAsync('docker info');
+    // Configurar PATH para macOS (Electron no siempre tiene acceso al PATH completo)
+    const env = process.platform === 'darwin' 
+      ? { 
+          ...process.env, 
+          PATH: process.env.PATH 
+            ? `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin`
+            : '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin'
+        }
+      : process.env;
+    
+    // Intentar con timeout de 10 segundos
+    await execAsync('docker info', { 
+      env,
+      timeout: 10000,
+      maxBuffer: 1024 * 1024 // 1MB buffer
+    });
     return true;
   } catch (error) {
+    console.error('Docker check failed:', error.message);
+    // Intentar con ruta absoluta en macOS
+    if (process.platform === 'darwin') {
+      try {
+        await execAsync('/usr/local/bin/docker info', { timeout: 10000 });
+        return true;
+      } catch (e) {
+        // Intentar con la ruta de Docker Desktop
+        try {
+          await execAsync('/Applications/Docker.app/Contents/Resources/bin/docker info', { timeout: 10000 });
+          return true;
+        } catch (e2) {
+          return false;
+        }
+      }
+    }
     return false;
   }
 }
@@ -24,11 +55,25 @@ async function checkDocker() {
 // Función para verificar si los servicios están corriendo
 async function checkServices() {
   try {
-    const { stdout } = await execAsync('docker ps --filter "name=agentos" --format "{{.Names}}"');
+    // Configurar PATH para macOS
+    const env = process.platform === 'darwin' 
+      ? { 
+          ...process.env, 
+          PATH: process.env.PATH 
+            ? `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin`
+            : '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin'
+        }
+      : process.env;
+    
+    const { stdout } = await execAsync('docker ps --filter "name=agentos" --format "{{.Names}}"', {
+      env,
+      timeout: 10000
+    });
     const services = stdout.trim().split('\n').filter(Boolean);
     const requiredServices = ['agentos-postgres', 'agentos-server', 'agentos-frontend'];
     return requiredServices.every(service => services.includes(service));
   } catch (error) {
+    console.error('Check services failed:', error.message);
     return false;
   }
 }
@@ -74,9 +119,20 @@ async function startDockerServices() {
   const projectRoot = getProjectRoot();
   const dockerComposePath = path.join(projectRoot, 'docker-compose.dev.yml');
   
+  // Configurar PATH para macOS
+  const env = process.platform === 'darwin' 
+    ? { 
+        ...process.env, 
+        PATH: process.env.PATH 
+          ? `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin`
+          : '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin'
+      }
+    : process.env;
+  
   return new Promise((resolve, reject) => {
     const dockerCompose = spawn('docker', ['compose', '-f', dockerComposePath, 'up', '-d'], {
       cwd: projectRoot,
+      env: env,
       stdio: 'pipe'
     });
 
