@@ -88,11 +88,29 @@ echo ""
 echo -e "  ${YELLOW}Login:${NC}      admin / admin123"
 echo -e "  ${YELLOW}n8n Login:${NC}  admin / admin (crear cuenta en primer uso)"
 echo ""
-echo -e "  ${BLUE}Para la app de escritorio (Electron):${NC}"
-echo "    cd electron && npm install && npm run dev"
+echo -e "  ${BLUE}Iniciando app de escritorio (Electron)...${NC}"
+echo ""
+
+# 5. Iniciar Electron
+if [ -d "electron" ]; then
+    cd electron
+    if [ ! -d "node_modules" ]; then
+        echo -e "${YELLOW}[4/5]${NC} Instalando dependencias de Electron (solo primera vez)..."
+        npm install
+    fi
+    echo -e "${YELLOW}[5/5]${NC} Abriendo app de escritorio..."
+    npm run dev &
+    cd ..
+    echo -e "${GREEN}   ✅ App de escritorio iniciada${NC}"
+else
+    echo -e "${YELLOW}   ⚠️  Carpeta 'electron' no encontrada. Inicia manualmente:${NC}"
+    echo "      cd electron && npm install && npm run dev"
+fi
+
 echo ""
 echo -e "  ${BLUE}Para detener todo:${NC}"
-echo "    docker compose -f docker-compose.dev.yml down"
+echo "    ./stop.sh"
+echo "    (o: docker compose -f docker-compose.dev.yml down)"
 echo ""
 echo -e "  ${BLUE}Para ver logs:${NC}"
 echo "    docker compose -f docker-compose.dev.yml logs -f"
