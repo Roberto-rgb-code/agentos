@@ -20,10 +20,14 @@
     },
     "files": [
       "main.js",
-      "../frontend/dist/**/*",
-      "../server/**/*",
-      "!../server/node_modules/**/*",
-      "!../server/__tests__/**/*"
+      "preload.js",
+      "../frontend/dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../docker-compose.dev.yml",
+        "to": "docker-compose.dev.yml"
+      }
     ],
     "mac": {
       "category": "public.app-category.productivity",

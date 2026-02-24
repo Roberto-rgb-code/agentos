@@ -64,6 +64,48 @@ Se abre la ventana de **Agentos** como app nativa de escritorio.
 
 ---
 
+## 📦 Crear ejecutable de escritorio (opcional)
+
+Para crear un ejecutable que puedas abrir desde el escritorio sin comandos:
+
+**1. Construir el frontend:**
+```bash
+cd frontend
+yarn build
+cd ..
+```
+
+**2. Construir el ejecutable:**
+```bash
+cd electron
+npm run build:mac  # Para macOS
+# o
+npm run build:win  # Para Windows
+# o
+npm run build:linux  # Para Linux
+```
+
+**3. El ejecutable estará en:**
+```
+electron/dist/Agentos-{version}.dmg  # macOS
+electron/dist/Agentos Setup {version}.exe  # Windows
+electron/dist/Agentos-{version}.AppImage  # Linux
+```
+
+**4. Instalar:**
+- **macOS:** Abre el `.dmg` y arrastra Agentos a Aplicaciones
+- **Windows:** Ejecuta el `.exe` instalador
+- **Linux:** Haz el `.AppImage` ejecutable: `chmod +x Agentos-*.AppImage`
+
+**5. Al abrir la app desde el escritorio:**
+- Verifica automáticamente que Docker esté corriendo
+- Levanta los servicios Docker si no están corriendo
+- Abre la ventana de Agentos
+
+> ⚠️ **Importante:** El ejecutable necesita que el proyecto esté clonado en `~/agentos` o en el mismo directorio donde está la app, para encontrar el `docker-compose.dev.yml`.
+
+---
+
 ## 🔐 Credenciales
 
 ### Agentos (app principal)
