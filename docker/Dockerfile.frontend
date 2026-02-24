@@ -20,6 +20,9 @@ ENV VITE_API_BASE=/api
 # Build
 RUN yarn build
 
+# Renombrar _index.html a index.html (el build de Vite genera _index.html)
+RUN cd dist && if [ -f "_index.html" ]; then mv _index.html index.html; fi
+
 # ============================================
 # STAGE 2: Serve con nginx
 # ============================================
