@@ -55,9 +55,9 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        echo "⏳ Descargando modelo LLM: llama3.1:8b ..."
-        ollama pull llama3.1:8b
-        echo "✅ llama3.1:8b listo"
+        echo "⏳ Descargando modelo LLM: llama3.2:3b ..."
+        ollama pull llama3.2:3b
+        echo "✅ llama3.2:3b listo"
         echo "⏳ Descargando modelo embeddings: nomic-embed-text ..."
         ollama pull nomic-embed-text
         echo "✅ nomic-embed-text listo"
@@ -82,7 +82,7 @@ services:
       JWT_SECRET: "agentos-secret-change-in-production"
       LLM_PROVIDER: ollama
       OLLAMA_BASE_PATH: http://ollama:11434
-      OLLAMA_MODEL_PREF: llama3.1:8b
+      OLLAMA_MODEL_PREF: llama3.2:3b
       EMBEDDING_ENGINE: ollama
       EMBEDDING_BASE_PATH: http://ollama:11434
       EMBEDDING_MODEL_PREF: nomic-embed-text
