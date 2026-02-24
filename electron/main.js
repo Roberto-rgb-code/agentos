@@ -294,14 +294,13 @@ function createWindow() {
   });
 
   // Cargar la aplicación
+  // Siempre cargar desde el frontend Dockerizado (localhost:3000)
+  // ya que el frontend corre en un contenedor Docker
+  mainWindow.loadURL('http://localhost:3000');
+  
+  // Abrir DevTools solo en desarrollo
   if (isDev) {
-    // En desarrollo, cargar desde Vite dev server
-    mainWindow.loadURL('http://localhost:3000');
-    // Abrir DevTools en desarrollo
     mainWindow.webContents.openDevTools();
-  } else {
-    // En producción, cargar desde archivos estáticos
-    mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
   }
 
   // Mostrar ventana cuando esté lista
