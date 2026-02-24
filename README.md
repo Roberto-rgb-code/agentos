@@ -14,12 +14,13 @@ Aplicación de escritorio que integra chatbot con IA (Ollama), CRM, gestión de 
 
 ---
 
-## 🚀 Instalación
+## 🚀 Instalación inicial
 
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/Roberto-rgb-code/agentos.git
+cd ~
+git clone https://github.com/Roberto-rgb-code/agentos.git agentos
 cd agentos
 ```
 
@@ -31,7 +32,7 @@ docker compose -f docker-compose.dev.yml up --build -d
 
 Esto levanta automáticamente:
 - ✅ **PostgreSQL** — base de datos
-- ✅ **Ollama** — IA local + descarga modelos (llama3.1:8b, nomic-embed-text)
+- ✅ **Ollama** — IA local + descarga modelos (tinyllama, nomic-embed-text)
 - ✅ **Backend** — API Node.js + migraciones + datos de ejemplo
 - ✅ **Frontend** — React + Nginx
 - ✅ **n8n** — workflow automation
@@ -64,18 +65,65 @@ Se abre la ventana de **Agentos** como app nativa de escritorio.
 
 ---
 
-## 📦 Crear ejecutable de escritorio (opcional)
+## 🔄 Actualizar desde una instalación existente
+
+Si ya tienes el proyecto clonado y quieres obtener los últimos cambios:
+
+### 1. Hacer pull de los cambios
+
+```bash
+cd ~/agentos  # o donde tengas el proyecto
+git pull origin master
+```
+
+### 2. Reconstruir los servicios Docker
+
+```bash
+docker compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+### 3. Si hay cambios en el frontend, reconstruir
+
+```bash
+cd frontend
+yarn install  # Solo si hay cambios en package.json
+yarn build
+cd ..
+```
+
+### 4. Si hay cambios en Electron, reinstalar dependencias
+
+```bash
+cd electron
+npm install  # Solo si hay cambios en package.json
+cd ..
+```
+
+---
+
+## 📦 Crear ejecutable de escritorio
 
 Para crear un ejecutable que puedas abrir desde el escritorio sin comandos:
 
-**1. Construir el frontend:**
+### Paso 1: Construir el frontend
+
 ```bash
 cd frontend
 yarn build
 cd ..
 ```
 
-**2. Construir el ejecutable:**
+**Importante:** Después del build, renombra `_index.html` a `index.html`:
+
+```bash
+cd frontend/dist
+mv _index.html index.html
+cd ../..
+```
+
+### Paso 2: Construir el ejecutable
+
 ```bash
 cd electron
 npm run build:mac  # Para macOS
@@ -85,23 +133,29 @@ npm run build:win  # Para Windows
 npm run build:linux  # Para Linux
 ```
 
-**3. El ejecutable estará en:**
+### Paso 3: Encontrar el ejecutable
+
+El ejecutable estará en:
 ```
-electron/dist/Agentos-{version}.dmg  # macOS
-electron/dist/Agentos Setup {version}.exe  # Windows
-electron/dist/Agentos-{version}.AppImage  # Linux
+electron/dist/Agentos-1.0.0.dmg          # macOS Intel
+electron/dist/Agentos-1.0.0-arm64.dmg    # macOS M1/M2/M3
+electron/dist/Agentos Setup 1.0.0.exe    # Windows
+electron/dist/Agentos-1.0.0.AppImage     # Linux
 ```
 
-**4. Instalar:**
-- **macOS:** Abre el `.dmg` y arrastra Agentos a Aplicaciones
+### Paso 4: Instalar
+
+- **macOS:** Abre el `.dmg` y arrastra **Agentos** a **Aplicaciones**
 - **Windows:** Ejecuta el `.exe` instalador
 - **Linux:** Haz el `.AppImage` ejecutable: `chmod +x Agentos-*.AppImage`
 
-**5. Al abrir la app desde el escritorio:**
-- Verifica automáticamente que Docker esté corriendo
-- Levanta los servicios Docker si no están corriendo
-- Muestra una pantalla de carga mientras inicia
-- Abre la ventana de Agentos cuando todo esté listo
+### Paso 5: Usar el ejecutable
+
+Al abrir la app desde el escritorio:
+- ✅ Verifica automáticamente que Docker esté corriendo
+- ✅ Levanta los servicios Docker si no están corriendo
+- ✅ Muestra una pantalla de carga mientras inicia
+- ✅ Abre la ventana de Agentos cuando todo esté listo
 
 > ⚠️ **Importante:** El ejecutable busca el `docker-compose.dev.yml` en estos lugares (en orden):
 > 1. `~/agentos/` (recomendado)
@@ -109,7 +163,7 @@ electron/dist/Agentos-{version}.AppImage  # Linux
 > 3. `~/Documents/agentos/`
 > 4. Directorio donde está instalada la app
 > 
-> **Solución más simple:** Clona el proyecto en `~/agentos`:
+> **Solución más simple:** Asegúrate de tener el proyecto clonado en `~/agentos`:
 > ```bash
 > cd ~
 > git clone https://github.com/Roberto-rgb-code/agentos.git agentos
@@ -135,9 +189,11 @@ electron/dist/Agentos-{version}.AppImage  # Linux
 |----------|--------|------------|
 | Frontend | 3000 | agentos-frontend |
 | Backend | 3001 | agentos-server |
-| PostgreSQL | 5432 | agentos-postgres |
+| PostgreSQL | 5433 | agentos-postgres |
 | Ollama (IA) | 11434 | agentos-ollama |
 | n8n | 5678 | agentos-n8n |
+
+> **Nota:** PostgreSQL usa el puerto **5433** (no 5432) para evitar conflictos con instalaciones locales.
 
 ---
 
@@ -219,7 +275,7 @@ docker compose -f docker-compose.dev.yml restart n8n
 │                             │               │
 │  ┌────────────┐       ┌─────┴──────┐        │
 │  │   n8n      │       │ PostgreSQL │        │
-│  │  :5678     │──────▶│  :5432     │        │
+│  │  :5678     │──────▶│  :5433     │        │
 │  └────────────┘       └────────────┘        │
 │                                              │
 │  ┌────────────┐                              │
@@ -277,6 +333,59 @@ docker compose -f docker-compose.dev.yml down
 # Reset completo (borra todos los datos)
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up --build -d
+```
+
+---
+
+## 🆘 Solución de problemas
+
+### El ejecutable no encuentra docker-compose.dev.yml
+
+Asegúrate de que el proyecto esté clonado en uno de estos lugares:
+- `~/agentos/` (recomendado)
+- `~/Desktop/agentos/`
+- `~/Documents/agentos/`
+
+```bash
+cd ~
+git clone https://github.com/Roberto-rgb-code/agentos.git agentos
+```
+
+### El frontend muestra "Welcome to nginx!"
+
+Reconstruye el contenedor del frontend:
+
+```bash
+cd frontend
+yarn build
+cd frontend/dist
+mv _index.html index.html
+cd ../../..
+docker compose -f docker-compose.dev.yml up --build -d agentos-frontend
+```
+
+### Puerto 5432 ya está en uso
+
+El proyecto usa el puerto **5433** para PostgreSQL. Si tienes problemas, verifica:
+
+```bash
+lsof -i :5432  # Ver qué está usando el puerto
+docker compose -f docker-compose.dev.yml ps  # Ver estado de contenedores
+```
+
+### El chatbot no responde
+
+Verifica que Ollama esté corriendo y tenga el modelo descargado:
+
+```bash
+docker logs agentos-ollama
+docker exec agentos-ollama ollama list
+```
+
+Si falta el modelo, descárgalo:
+
+```bash
+docker exec agentos-ollama ollama pull tinyllama
 ```
 
 ---
