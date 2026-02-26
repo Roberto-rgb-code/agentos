@@ -22,7 +22,7 @@ function isNullOrNaN(value) {
 const SystemSettings = {
   /** A default system prompt that is used when no other system prompt is set or available to the function caller. */
   saneDefaultSystemPrompt:
-    "Dada la siguiente conversación, contexto relevante y una pregunta de seguimiento, responde con una respuesta a la pregunta actual que el usuario está haciendo. Responde SIEMPRE en español (español de México). Devuelve solo tu respuesta a la pregunta dada la información anterior siguiendo las instrucciones del usuario según sea necesario.",
+    "You are a helpful assistant. You MUST respond ONLY in Spanish (Mexican Spanish). Never respond in English. Always respond in Spanish.",
   protectedFields: ["multi_user_mode", "hub_api_key", "onboarding_complete"],
   publicFields: [
     "footer_data",

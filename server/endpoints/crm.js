@@ -400,13 +400,11 @@ function crmEndpoints(app) {
           return response.status(404).json({ error: "No workspace available" });
         }
 
-        // Create a temporary workspace object with Spanish prompt
-        const spanishPrompt = "Eres un asistente virtual amigable y profesional. Responde SIEMPRE en español (español de México). Sé conciso, claro y útil. Si no tienes información suficiente, sé honesto y ofrece ayudar de otra manera.";
+        // Create a temporary workspace object with explicit Spanish prompt
+        // Force Spanish response for WhatsApp
         const workspaceWithSpanishPrompt = {
           ...workspace,
-          openAiPrompt: workspace.openAiPrompt 
-            ? `${workspace.openAiPrompt}\n\nIMPORTANTE: Responde SIEMPRE en español (español de México).` 
-            : spanishPrompt
+          openAiPrompt: "You are a helpful assistant. You MUST respond ONLY in Spanish (Mexican Spanish). Never respond in English. Always respond in Spanish."
         };
 
         // Generate response using chatbot
@@ -431,6 +429,40 @@ function crmEndpoints(app) {
         });
       } catch (error) {
         console.error("Failed to generate WhatsApp response:", error);
+        response.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // POST /api/crm/workspaces/update-to-spanish - Update all workspaces to Spanish
+  app.post(
+    "/crm/workspaces/update-to-spanish",
+    [validatedRequest, strictMultiUserRoleValid([ROLES.admin])],
+    async (request, response) => {
+      try {
+        const { Workspace } = require("../models/workspace");
+        const workspaces = await Workspace.where();
+
+        const SPANISH_PROMPT = "Eres un asistente virtual amigable y profesional. Responde SIEMPRE en español (español de México). Sé conciso, claro y útil. Si no tienes información suficiente, sé honesto y ofrece ayudar de otra manera. Dada la siguiente conversación, contexto relevante y una pregunta de seguimiento, responde con una respuesta a la pregunta actual que el usuario está haciendo. Devuelve solo tu respuesta a la pregunta dada la información anterior siguiendo las instrucciones del usuario según sea necesario.";
+
+        const updated = [];
+        for (const workspace of workspaces) {
+          const currentPrompt = workspace.openAiPrompt;
+          const newPrompt = currentPrompt 
+            ? `${currentPrompt}\n\nIMPORTANTE: Responde SIEMPRE en español (español de México).` 
+            : SPANISH_PROMPT;
+
+          await Workspace.update(workspace.id, { openAiPrompt: newPrompt });
+          updated.push({ id: workspace.id, name: workspace.name, slug: workspace.slug });
+        }
+
+        response.status(200).json({ 
+          success: true, 
+          message: `Actualizados ${updated.length} workspaces a español`,
+          workspaces: updated
+        });
+      } catch (error) {
+        console.error("Failed to update workspaces to Spanish:", error);
         response.status(500).json({ error: error.message });
       }
     }
