@@ -127,7 +127,7 @@ export default function CRMLeadDetail() {
               {/* Lead Card */}
               <div className="bg-theme-bg-primary rounded-lg p-4 border border-white/10">
                 <h2 className="text-xl font-bold text-theme-text-primary mb-3">
-                  {lead.name}
+                {lead.name}
                 </h2>
 
                 <div className="space-y-2 text-sm">
@@ -146,8 +146,8 @@ export default function CRMLeadDetail() {
                   <div className="flex items-center gap-2 text-theme-text-secondary">
                     <Tag className="h-4 w-4" />
                     <span>{lead.interes || "Sin interés definido"}</span>
-                  </div>
-                </div>
+            </div>
+          </div>
 
                 <div className="mt-4 pt-3 border-t border-white/10">
                   <div className="flex items-center justify-between mb-1">
@@ -200,7 +200,7 @@ export default function CRMLeadDetail() {
               {/* Tabs */}
               <div className="flex gap-1 mb-4 border-b border-white/10">
                 {["conversaciones", "eventos", "whatsapp"].map((t) => (
-                  <button
+                <button
                     key={t}
                     onClick={() => setTab(t)}
                     className={`px-4 py-2 text-sm capitalize transition-colors ${
@@ -210,7 +210,7 @@ export default function CRMLeadDetail() {
                     }`}
                   >
                     {t === "conversaciones" ? "Conversaciones" : t === "eventos" ? "Eventos" : "WhatsApp"}
-                  </button>
+                </button>
                 ))}
               </div>
 
@@ -265,8 +265,8 @@ export default function CRMLeadDetail() {
                     <CTAButton onClick={handleSendMessage} disabled={!newMessage.trim()}>
                       <PaperPlaneTilt className="h-4 w-4" />
                     </CTAButton>
-                  </div>
-                </div>
+            </div>
+          </div>
               )}
 
               {tab === "eventos" && (
@@ -274,23 +274,23 @@ export default function CRMLeadDetail() {
                   {lead.events && lead.events.length > 0 ? (
                     <div className="space-y-3">
                       {lead.events.map((event) => (
-                        <div
-                          key={event.id}
+                  <div
+                    key={event.id}
                           className="flex items-center gap-3 p-3 bg-theme-bg-secondary rounded-lg"
-                        >
+                  >
                           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                          <div className="flex-1">
+                    <div className="flex-1">
                             <span className="text-sm font-medium text-theme-text-primary">
-                              {event.type}
-                            </span>
-                            {event.revenue && (
+                          {event.type}
+                        </span>
+                        {event.revenue && (
                               <span className="ml-2 text-green-400 text-xs">
                                 ${parseFloat(event.revenue).toFixed(2)}
-                              </span>
-                            )}
-                          </div>
+                          </span>
+                        )}
+                      </div>
                           <span className="text-xs text-theme-text-secondary">
-                            {new Date(event.createdAt).toLocaleString()}
+                        {new Date(event.createdAt).toLocaleString()}
                           </span>
                         </div>
                       ))}
@@ -298,9 +298,9 @@ export default function CRMLeadDetail() {
                   ) : (
                     <p className="text-center text-theme-text-secondary py-8 text-sm">
                       No hay eventos registrados
-                    </p>
-                  )}
-                </div>
+                        </p>
+                      )}
+                    </div>
               )}
 
               {tab === "whatsapp" && (
@@ -324,16 +324,16 @@ export default function CRMLeadDetail() {
                           <p className="text-[10px] text-theme-text-secondary mt-1">
                             {new Date(msg.received_at).toLocaleString()}
                           </p>
-                        </div>
-                      ))}
+                  </div>
+                ))}
                     </div>
                   ) : (
                     <p className="text-center text-theme-text-secondary py-8 text-sm">
                       No hay mensajes de WhatsApp
                     </p>
                   )}
-                </div>
-              )}
+              </div>
+            )}
             </div>
           </div>
         </div>

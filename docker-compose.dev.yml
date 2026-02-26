@@ -76,7 +76,7 @@ services:
       dockerfile: docker/Dockerfile.server
     container_name: agentos-server
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       SERVER_PORT: 3001
       DATABASE_URL: "postgresql://agentos:agentos@postgres:5432/agentos_dev"
       JWT_SECRET: "agentos-secret-change-in-production"
@@ -89,6 +89,8 @@ services:
       STORAGE_DIR: /app/storage
       SEED_ADMIN_EMAIL: admin
       SEED_ADMIN_PASSWORD: admin123
+      WHATSAPP_PHONE_NUMBER_ID: "1021497517710628"
+      WHATSAPP_ACCESS_TOKEN: "EAAxZBvp3lAH4BQwzZCZCk4fgqmyVfc0AVImVLx0dN4ZBz0ZCGRu7bfhVXK30AsMJxBNWT1O818uSzxwrfTnUKhcWaFSpes1IeCy54ohA4vMKfMn5YfWFOAdYWmkGVDDZBFE9tis52CugzqZC2ZAqsCsKv0luclE48Ox0DK9XugvwyedccBJQ8CpzP4gegNQpKFn2gVWjZBcwaZAm0stMrip5PVCjsZBtIJEBzcPbDYrQtLekZB6S5b349ZACZCvCHfwnIqFEmAE0fx3sCC0iKsjZCNPtxZBT"
     ports:
       - "3001:3001"
     volumes:

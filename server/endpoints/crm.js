@@ -10,6 +10,7 @@ const { Conversacion } = require("../models/conversacion");
 const { Agente } = require("../models/agente");
 const { Producto } = require("../models/producto");
 const { CrmWebhook } = require("../models/crmWebhook");
+const { WhatsappMessage } = require("../models/whatsappMessage");
 
 function crmEndpoints(app) {
   if (!app) return;
@@ -282,6 +283,160 @@ function crmEndpoints(app) {
   );
 
   // ============================================
+  // WHATSAPP MESSAGES
+  // ============================================
+
+  // GET /api/crm/leads/:id/whatsapp-messages
+  app.get(
+    "/crm/leads/:id/whatsapp-messages",
+    [validatedRequest, strictMultiUserRoleValid([ROLES.all])],
+    async (request, response) => {
+      try {
+        const user = await userFromSession(request, response);
+        if (!user) return response.sendStatus(401).end();
+
+        const { id } = request.params;
+        const lead = await Lead.get({ id, userId: user.id });
+        if (!lead) return response.sendStatus(404).end();
+
+        const messages = await WhatsappMessage.forLead(id);
+        response.status(200).json({ messages });
+      } catch (error) {
+        console.error(error);
+        response.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // POST /api/crm/whatsapp/send - Send WhatsApp message via Meta API
+  app.post(
+    "/crm/whatsapp/send",
+    async (request, response) => {
+      try {
+        const body = reqBody(request);
+        const { to, message } = body;
+
+        if (!to || !message) {
+          return response.status(400).json({ error: "to and message are required" });
+        }
+
+        const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+        if (!phoneNumberId || !accessToken) {
+          return response.status(500).json({ 
+            error: "WhatsApp credentials not configured. Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN" 
+          });
+        }
+
+        // Send message via Meta WhatsApp Business API
+        const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+        const payload = {
+          messaging_product: "whatsapp",
+          to: to,
+          type: "text",
+          text: {
+            body: message
+          }
+        };
+
+        const fetch = require("node-fetch");
+        const apiResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await apiResponse.json();
+
+        if (!apiResponse.ok) {
+          console.error("WhatsApp API Error:", result);
+          return response.status(apiResponse.status).json({ 
+            error: result.error?.message || "Failed to send WhatsApp message",
+            details: result
+          });
+        }
+
+        response.status(200).json({ 
+          success: true, 
+          message_id: result.messages?.[0]?.id,
+          result 
+        });
+      } catch (error) {
+        console.error("Failed to send WhatsApp message:", error);
+        response.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // POST /api/crm/whatsapp/generate-response - Generate AI response for WhatsApp message
+  app.post(
+    "/crm/whatsapp/generate-response",
+    async (request, response) => {
+      try {
+        const body = reqBody(request);
+        const { message, workspaceSlug } = body;
+
+        if (!message) {
+          return response.status(400).json({ error: "message is required" });
+        }
+
+        const { Workspace } = require("../models/workspace");
+        const { ApiChatHandler } = require("../utils/chats/apiChatHandler");
+
+        // Get workspace (use provided slug or first available)
+        let workspace;
+        if (workspaceSlug) {
+          workspace = await Workspace.get({ slug: workspaceSlug });
+        } else {
+          const workspaces = await Workspace.where();
+          workspace = workspaces.length > 0 ? workspaces[0] : null;
+        }
+
+        if (!workspace) {
+          return response.status(404).json({ error: "No workspace available" });
+        }
+
+        // Create a temporary workspace object with Spanish prompt
+        const spanishPrompt = "Eres un asistente virtual amigable y profesional. Responde SIEMPRE en español (español de México). Sé conciso, claro y útil. Si no tienes información suficiente, sé honesto y ofrece ayudar de otra manera.";
+        const workspaceWithSpanishPrompt = {
+          ...workspace,
+          openAiPrompt: workspace.openAiPrompt 
+            ? `${workspace.openAiPrompt}\n\nIMPORTANTE: Responde SIEMPRE en español (español de México).` 
+            : spanishPrompt
+        };
+
+        // Generate response using chatbot
+        const result = await ApiChatHandler.chatSync({
+          workspace: workspaceWithSpanishPrompt,
+          message,
+          mode: "chat",
+          user: null,
+          thread: null,
+          sessionId: null,
+          attachments: [],
+          reset: false,
+        });
+
+        if (result.error) {
+          return response.status(500).json({ error: result.error });
+        }
+
+        response.status(200).json({ 
+          response: result.textResponse || "Lo siento, no pude generar una respuesta.",
+          success: true
+        });
+      } catch (error) {
+        console.error("Failed to generate WhatsApp response:", error);
+        response.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
   // AGENTES
   // ============================================
 
@@ -471,6 +626,7 @@ function crmEndpoints(app) {
                 id: existingLead.id,
                 userId: adminUser.id,
                 updates: {
+                  ...(lead_data.name && { name: lead_data.name }),
                   ...(lead_data.ciudad && { ciudad: lead_data.ciudad }),
                   ...(lead_data.interes && { interes: lead_data.interes }),
                   ...(lead_data.etapa && { etapa: lead_data.etapa }),
@@ -484,6 +640,24 @@ function crmEndpoints(app) {
                   mensaje: lead_data.mensaje,
                   rol: "user",
                 });
+              }
+
+              // Save WhatsApp message to database if meta data is present
+              if (body.meta && body.meta.messageId) {
+                try {
+                  await WhatsappMessage.create({
+                    from: lead_data.phone,
+                    messageId: body.meta.messageId,
+                    text: lead_data.mensaje || "",
+                    timestamp: body.meta.timestamp,
+                    raw: body.meta.raw,
+                    userId: adminUser.id,
+                    autoCreateLead: false, // Lead already exists
+                  });
+                } catch (error) {
+                  console.error("Failed to save WhatsApp message:", error.message);
+                  // Don't fail the request if message save fails
+                }
               }
 
               return response.status(200).json({
@@ -510,6 +684,24 @@ function crmEndpoints(app) {
                   mensaje: lead_data.mensaje,
                   rol: "user",
                 });
+              }
+
+              // Save WhatsApp message to database if meta data is present
+              if (body.meta && body.meta.messageId && result.lead) {
+                try {
+                  await WhatsappMessage.create({
+                    from: lead_data.phone,
+                    messageId: body.meta.messageId,
+                    text: lead_data.mensaje || "",
+                    timestamp: body.meta.timestamp,
+                    raw: body.meta.raw,
+                    userId: adminUser.id,
+                    autoCreateLead: false, // Lead already created
+                  });
+                } catch (error) {
+                  console.error("Failed to save WhatsApp message:", error.message);
+                  // Don't fail the request if message save fails
+                }
               }
 
               return response.status(201).json({

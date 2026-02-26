@@ -3,31 +3,83 @@
   "nodes": [
     {
       "parameters": {
+        "httpMethod": "GET",
+        "path": "whatsapp-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-get-node",
+      "name": "Webhook GET (Verificación)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 200]
+    },
+    {
+      "parameters": {
         "httpMethod": "POST",
         "path": "whatsapp-lead",
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "webhook-node",
-      "name": "Webhook WhatsApp",
+      "id": "webhook-post-node",
+      "name": "Webhook POST (Mensajes)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [250, 300]
+      "position": [250, 400]
     },
     {
       "parameters": {
-        "jsCode": "// Extraer datos del webhook de WhatsApp\nconst body = $input.first().json.body || $input.first().json;\n\nconst output = {\n  origen: 'WHATSAPP',\n  lead_data: {\n    name: body.name || body.profile_name || body.from || 'Sin nombre',\n    phone: body.phone || body.from || body.wa_id || '',\n    email: body.email || '',\n    ciudad: body.city || body.ciudad || '',\n    interes: body.message || body.text || body.interes || 'Consulta via WhatsApp',\n    etapa: 'NUEVO_CLIENTE',\n    mensaje: body.message || body.text || ''\n  }\n};\n\nreturn [{ json: output }];"
+        "jsCode": "// Verificar webhook de Meta (GET request)\nconst input = $input.first().json || {};\n// Los query parameters pueden estar en query o directamente en el objeto\nconst query = input.query || input;\nconst verifyToken = query['hub.verify_token'] || query.hub?.verify_token;\nconst challenge = query['hub.challenge'] || query.hub?.challenge;\nconst mode = query['hub.mode'] || query.hub?.mode;\n\n// Token de verificación configurado en Meta Business\nconst EXPECTED_TOKEN = 'agentos-webhook-2024';\n\n// Debug: log para ver qué está llegando\nconsole.log('Query params:', query);\nconsole.log('Mode:', mode, 'Token:', verifyToken, 'Challenge:', challenge);\n\nif (mode === 'subscribe' && verifyToken === EXPECTED_TOKEN) {\n  // Devolver el challenge para verificar el webhook\n  return [{ json: { challenge: challenge } }];\n} else {\n  // Token inválido\n  return [{ json: { error: 'Invalid verify token', received: { mode, verifyToken } } }];\n}"
       },
-      "id": "code-node",
-      "name": "Procesar Datos",
+      "id": "verify-node",
+      "name": "Verificar Webhook",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [470, 300]
+      "position": [470, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Procesar mensaje de WhatsApp desde Meta\nconst body = $input.first().json.body || $input.first().json;\n\n// Formato de Meta WhatsApp Business API:\n// {\n//   \"entry\": [{\n//     \"changes\": [{\n//       \"value\": {\n//         \"messages\": [{ \"from\": \"...\", \"text\": { \"body\": \"...\" }, \"id\": \"...\" }],\n//         \"contacts\": [{ \"profile\": { \"name\": \"...\" }, \"wa_id\": \"...\" }]\n//       }\n//     }]\n//   }]\n// }\n\nlet output = null;\n\n// Procesar formato de Meta\nif (body.entry && Array.isArray(body.entry) && body.entry.length > 0) {\n  const entry = body.entry[0];\n  if (entry.changes && Array.isArray(entry.changes) && entry.changes.length > 0) {\n    const change = entry.changes[0];\n    const value = change.value || {};\n    \n    // Extraer mensaje\n    const messages = value.messages || [];\n    const message = messages[0] || {};\n    \n    // Extraer contacto\n    const contacts = value.contacts || [];\n    const contact = contacts[0] || {};\n    \n    // Extraer datos\n    const from = message.from || contact.wa_id || '';\n    const messageText = message.text?.body || message.body || '';\n    const messageId = message.id || '';\n    const profileName = contact.profile?.name || 'Sin nombre';\n    \n    // Solo procesar si hay un mensaje de texto\n    if (message.type === 'text' && from && messageText) {\n      output = {\n        origen: 'WHATSAPP',\n        lead_data: {\n          name: profileName || `Lead ${from.slice(-4)}`,\n          phone: from,\n          email: '',\n          ciudad: '',\n          interes: messageText.substring(0, 200) || 'Consulta via WhatsApp',\n          etapa: 'NUEVO_CLIENTE',\n          mensaje: messageText\n        },\n        meta: {\n          messageId: messageId,\n          timestamp: message.timestamp || new Date().toISOString(),\n          raw: body\n        }\n      };\n    }\n  }\n}\n\n// Si no se pudo procesar, devolver null para que el workflow continúe\nif (!output) {\n  return [{ json: { skip: true, reason: 'No valid message found' } }];\n}\n\nreturn [{ json: output }];"
+      },
+      "id": "process-node",
+      "name": "Procesar Mensaje Meta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [470, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "skip-condition",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-node",
+      "name": "¿Procesar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [690, 400]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:3001/api/crm/webhook/incoming",
+        "url": "http://127.0.0.1:3001/api/crm/webhook/incoming",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -46,7 +98,19 @@
       "name": "Crear Lead en CRM",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [690, 300]
+      "position": [910, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge || '' }}",
+        "options": {}
+      },
+      "id": "response-verify-node",
+      "name": "Responder Verificación",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [690, 200]
     },
     {
       "parameters": {
@@ -54,27 +118,129 @@
         "responseBody": "={{ JSON.stringify({ success: true, lead: $json }) }}",
         "options": {}
       },
-      "id": "response-node",
+      "id": "response-ok-node",
       "name": "Responder OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [910, 300]
+      "position": [1130, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, skipped: true }) }}",
+        "options": {}
+      },
+      "id": "response-skip-node",
+      "name": "Responder Skip",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1130, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/crm/whatsapp/generate-response",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $('Procesar Mensaje Meta').item.json.lead_data.mensaje }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "generate-response-node",
+      "name": "Generar Respuesta Chatbot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1130, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/crm/whatsapp/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $('Procesar Mensaje Meta').item.json.lead_data.phone, message: $json.response || 'Gracias por tu mensaje. Te responderemos pronto.' }) }}",
+        "options": {}
+      },
+      "id": "send-whatsapp-node",
+      "name": "Enviar Respuesta WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1350, 400]
     }
   ],
   "connections": {
-    "Webhook WhatsApp": {
+    "Webhook GET (Verificación)": {
       "main": [
         [
           {
-            "node": "Procesar Datos",
+            "node": "Verificar Webhook",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Procesar Datos": {
+    "Webhook POST (Mensajes)": {
       "main": [
+        [
+          {
+            "node": "Procesar Mensaje Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Webhook": {
+      "main": [
+        [
+          {
+            "node": "Responder Verificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Mensaje Meta": {
+      "main": [
+        [
+          {
+            "node": "¿Procesar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Procesar?": {
+      "main": [
+        [
+          {
+            "node": "Responder Skip",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Crear Lead en CRM",
@@ -85,6 +251,28 @@
       ]
     },
     "Crear Lead en CRM": {
+      "main": [
+        [
+          {
+            "node": "Generar Respuesta Chatbot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Respuesta Chatbot": {
+      "main": [
+        [
+          {
+            "node": "Enviar Respuesta WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Respuesta WhatsApp": {
       "main": [
         [
           {

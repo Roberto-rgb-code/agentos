@@ -93,22 +93,56 @@ cloudflared tunnel --url http://localhost:5678
 
 ---
 
-## 🔧 Paso 2: Configurar el webhook en Meta Business
+## 🔧 Paso 2: Importar y configurar el workflow en n8n
 
-### 2.1. Acceder a Meta for Developers
+### 2.1. Acceder a n8n
+
+1. Abre tu navegador y ve a `http://localhost:5678`
+2. Inicia sesión (por defecto: `admin` / `admin`)
+
+### 2.2. Importar el workflow
+
+1. En n8n, haz click en **"Workflows"** en el menú lateral
+2. Haz click en **"Import from File"** o el botón **"+"** → **"Import from File"**
+3. Selecciona el archivo: `n8n-workflows/webhook-to-crm.json`
+4. El workflow se importará con el nombre **"WhatsApp Webhook → CRM Lead"**
+
+### 2.3. Configurar el token de verificación (Opcional)
+
+Si quieres cambiar el token de verificación del webhook:
+
+1. Abre el workflow importado
+2. Haz click en el nodo **"Verificar Webhook"**
+3. En el código, busca la línea:
+   ```javascript
+   const EXPECTED_TOKEN = 'agentos-webhook-2024';
+   ```
+4. Cambia `'agentos-webhook-2024'` por el token que quieras usar
+5. **⚠️ IMPORTANTE:** Usa el mismo token cuando configures el webhook en Meta
+
+### 2.4. Activar el workflow
+
+1. Haz click en el botón **"Active"** en la esquina superior derecha (debe estar verde)
+2. El workflow ahora está escuchando en: `http://localhost:5678/webhook/whatsapp-lead`
+
+---
+
+## 🔧 Paso 3: Configurar el webhook en Meta Business
+
+### 3.1. Acceder a Meta for Developers
 
 1. Ve a [developers.facebook.com](https://developers.facebook.com)
 2. Inicia sesión con tu cuenta de Meta Business
 3. Selecciona tu **Aplicación** (o créala si no tienes una)
 
-### 2.2. Configurar WhatsApp
+### 3.2. Configurar WhatsApp
 
 1. En el menú lateral, ve a **WhatsApp** → **Configuration**
 2. Si es la primera vez, completa la configuración inicial:
    - **Phone Number ID**: Tu número de WhatsApp Business
    - **WhatsApp Business Account ID**: Tu cuenta de negocio
 
-### 2.3. Configurar el Webhook
+### 3.3. Configurar el Webhook
 
 1. En la sección **Webhook**, haz click en **"Edit"** o **"Configure"**
 2. En el campo **Callback URL**, ingresa:
@@ -119,18 +153,21 @@ cloudflared tunnel --url http://localhost:5678
    ```
    https://abc123.ngrok-free.app/webhook/whatsapp-lead
    ```
-   
+
    > **Nota:** Reemplaza `TU-TUNEL` con la URL que obtuviste de ngrok o Cloudflare Tunnel.
 
-3. En el campo **Verify Token**, ingresa un token secreto (puede ser cualquier string):
+3. En el campo **Verify Token**, ingresa el mismo token que configuraste en n8n:
    ```
    agentos-webhook-2024
    ```
-   > **⚠️ IMPORTANTE:** Guarda este token, lo necesitarás para verificar el webhook.
+   > **⚠️ IMPORTANTE:** Debe ser exactamente el mismo token que está en el nodo "Verificar Webhook" del workflow de n8n.
 
 4. Haz click en **"Verify and Save"**
+   - Meta enviará una petición GET a tu webhook para verificar
+   - El workflow de n8n responderá con el challenge
+   - Si todo está correcto, verás un mensaje de éxito
 
-### 2.4. Suscribirse a eventos
+### 3.4. Suscribirse a eventos
 
 1. En la sección **Webhook Fields**, selecciona los eventos que quieres recibir:
    - ✅ **messages** - Para recibir mensajes entrantes
@@ -139,7 +176,7 @@ cloudflared tunnel --url http://localhost:5678
 
 2. Haz click en **"Save"**
 
-### 2.5. Verificar el webhook
+### 3.5. Verificar el webhook
 
 Meta intentará verificar el webhook haciendo una petición GET a tu URL. Asegúrate de que:
 
@@ -154,7 +191,7 @@ Si la verificación falla:
 
 ---
 
-## 🐳 Paso 3: Actualizar configuración en Docker (Opcional)
+## 🐳 Paso 4: Actualizar configuración en Docker (Opcional)
 
 Si quieres que la aplicación conozca la URL del webhook, puedes actualizar `docker-compose.dev.yml`:
 
@@ -209,7 +246,7 @@ docker compose -f docker-compose.dev.yml restart n8n
 
 ---
 
-## ✅ Paso 4: Probar el webhook
+## ✅ Paso 5: Probar el webhook
 
 ### 4.1. Enviar un mensaje de prueba
 
@@ -237,32 +274,65 @@ docker logs agentos-server -f
 
 ## 🧪 Probar manualmente con curl
 
+### Probar verificación del webhook (GET)
+
+```bash
+# Simular verificación de Meta
+curl "http://localhost:5678/webhook/whatsapp-lead?hub.mode=subscribe&hub.verify_token=agentos-webhook-2024&hub.challenge=test123"
+```
+
+**Respuesta esperada:** `test123` (el challenge que enviaste)
+
+### Probar recepción de mensaje (POST)
+
 Puedes probar el webhook manualmente simulando una petición de Meta:
 
 ```bash
 curl -X POST http://localhost:5678/webhook/whatsapp-lead \
   -H "Content-Type: application/json" \
   -d '{
+    "object": "whatsapp_business_account",
     "entry": [{
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
       "changes": [{
         "value": {
-          "messages": [{
-            "from": "5215512345678",
-            "text": {
-              "body": "Hola, me interesa el Plan Premium"
-            },
-            "type": "text"
-          }],
+          "messaging_product": "whatsapp",
+          "metadata": {
+            "display_phone_number": "15550555555",
+            "phone_number_id": "PHONE_NUMBER_ID"
+          },
           "contacts": [{
             "profile": {
               "name": "Juan Perez"
             },
             "wa_id": "5215512345678"
+          }],
+          "messages": [{
+            "from": "5215512345678",
+            "id": "wamid.test123456",
+            "timestamp": "1234567890",
+            "text": {
+              "body": "Hola, me interesa el Plan Premium"
+            },
+            "type": "text"
           }]
-        }
+        },
+        "field": "messages"
       }]
     }]
   }'
+```
+
+**Respuesta esperada:**
+```json
+{
+  "success": true,
+  "lead": {
+    "success": true,
+    "action": "created",
+    "lead_id": "uuid-del-lead"
+  }
+}
 ```
 
 ---
@@ -293,40 +363,96 @@ Para mayor seguridad, puedes configurar n8n para verificar que las peticiones ve
    ```bash
    docker compose -f docker-compose.dev.yml ps
    ```
+   Debe mostrar `agentos-n8n` con estado `Up`
 
-2. **Verifica que el workflow esté publicado:**
-   - En n8n, el workflow debe tener el botón **"Active"** (verde)
+2. **Verifica que el workflow esté activo:**
+   - En n8n (`http://localhost:5678`), ve a **Workflows**
+   - Abre el workflow **"WhatsApp Webhook → CRM Lead"**
+   - El botón **"Active"** debe estar verde (activado)
+   - Si está gris, haz click para activarlo
 
-3. **Verifica la URL:**
-   - Debe ser exactamente: `https://TU-TUNEL.ngrok-free.app/webhook/whatsapp-lead`
+3. **Verifica la URL del webhook:**
+   - En n8n, haz click en el nodo **"Webhook GET (Verificación)"**
+   - Verifica que el path sea: `whatsapp-lead`
+   - La URL completa debe ser: `https://TU-TUNEL.ngrok-free.app/webhook/whatsapp-lead`
    - Sin espacios, sin trailing slash
 
-4. **Revisa los logs:**
+4. **Verifica el token de verificación:**
+   - En n8n, haz click en el nodo **"Verificar Webhook"**
+   - Verifica que el token en el código sea: `agentos-webhook-2024`
+   - Debe ser **exactamente igual** al token que configuraste en Meta Business
+
+5. **Prueba la verificación manualmente:**
+   ```bash
+   curl "http://localhost:5678/webhook/whatsapp-lead?hub.mode=subscribe&hub.verify_token=agentos-webhook-2024&hub.challenge=test123"
+   ```
+   Debe devolver: `test123`
+
+6. **Revisa los logs de n8n:**
    ```bash
    docker logs agentos-n8n -f
    ```
+   Busca errores relacionados con el webhook
+
+7. **Verifica que el túnel esté activo:**
+   - ngrok o cloudflared debe estar corriendo
+   - La URL debe ser accesible desde internet
+   - Prueba abrir la URL en tu navegador (debe mostrar un error 404 o similar, pero no "connection refused")
 
 ### Los mensajes no llegan al CRM
 
-1. **Verifica el formato del webhook:**
-   - Revisa que el workflow de n8n esté procesando correctamente los datos
-   - Verifica que la URL del backend sea correcta: `http://server:3001/api/crm/webhook/incoming`
+1. **Verifica que el workflow esté activo:**
+   - En n8n, el workflow debe estar activo (botón verde)
+   - Verifica que no haya errores en la ejecución del workflow
 
-2. **Revisa los logs del backend:**
+2. **Revisa la ejecución del workflow en n8n:**
+   - En n8n, ve a **Executions** (en el menú lateral)
+   - Busca ejecuciones recientes del workflow
+   - Haz click en una ejecución para ver los detalles
+   - Verifica que cada nodo haya ejecutado correctamente
+   - Si hay un error, revisa el mensaje de error
+
+3. **Verifica el formato del webhook:**
+   - El nodo **"Procesar Mensaje Meta"** debe extraer correctamente los datos
+   - Verifica que el formato del mensaje de Meta sea el esperado
+   - El workflow solo procesa mensajes de tipo `text`
+
+4. **Verifica la URL del backend:**
+   - En n8n, haz click en el nodo **"Crear Lead en CRM"**
+   - Verifica que la URL sea: `http://host.docker.internal:3001/api/crm/webhook/incoming`
+   - Si el backend no está en Docker, cambia a: `http://localhost:3001/api/crm/webhook/incoming`
+
+5. **Revisa los logs del backend:**
    ```bash
+   # Si está en Docker
    docker logs agentos-server -f
+
+   # Si está corriendo localmente
+   # Revisa la consola donde está corriendo el servidor
    ```
 
-3. **Prueba el endpoint manualmente:**
+6. **Prueba el endpoint del CRM manualmente:**
    ```bash
    curl -X POST http://localhost:3001/api/crm/webhook/incoming \
      -H "Content-Type: application/json" \
      -d '{
-       "name": "Test",
-       "phone": "+5215512345678",
-       "email": "test@example.com",
-       "message": "Mensaje de prueba"
+       "origen": "WHATSAPP",
+       "lead_data": {
+         "name": "Test Lead",
+         "phone": "5215512345678",
+         "email": "test@example.com",
+         "interes": "Consulta de prueba",
+         "etapa": "NUEVO_CLIENTE",
+         "mensaje": "Mensaje de prueba"
+       }
      }'
+   ```
+   Debe devolver: `{"success":true,"action":"created","lead_id":"..."}`
+
+7. **Verifica que el backend esté corriendo:**
+   ```bash
+   # Verificar que el servidor responda
+   curl http://localhost:3001/api/health || echo "Servidor no responde"
    ```
 
 ### La URL de ngrok cambia cada vez
@@ -340,6 +466,23 @@ Para mayor seguridad, puedes configurar n8n para verificar que las peticiones ve
 ```bash
 ngrok http 5678 --domain=tu-dominio.ngrok-free.app
 ```
+
+**Nota:** Después de cambiar la URL, debes actualizar la configuración del webhook en Meta Business con la nueva URL.
+
+### El workflow no procesa mensajes de tipo imagen/video/audio
+
+**Comportamiento esperado:** El workflow actual solo procesa mensajes de tipo `text`. Para procesar otros tipos de mensajes (imágenes, videos, audio), necesitarías modificar el nodo **"Procesar Mensaje Meta"** en n8n para manejar esos tipos.
+
+### El lead se crea pero sin nombre
+
+**Causa:** Meta no siempre envía el nombre del perfil en el webhook.
+
+**Solución:** El workflow usa el nombre del perfil si está disponible, o genera un nombre basado en los últimos 4 dígitos del teléfono: `Lead 5678`
+
+Para mejorar esto, podrías:
+1. Usar la API de Meta para obtener el perfil completo del contacto
+2. Guardar el nombre cuando el usuario se registre en tu sistema
+3. Permitir editar el nombre manualmente en el CRM
 
 ---
 
@@ -356,12 +499,16 @@ ngrok http 5678 --domain=tu-dominio.ngrok-free.app
 
 - [ ] ngrok o Cloudflare Tunnel corriendo
 - [ ] URL del túnel copiada
+- [ ] n8n corriendo y accesible
+- [ ] Workflow importado en n8n
+- [ ] Workflow activado (botón verde "Active")
+- [ ] Token de verificación configurado (mismo en n8n y Meta)
 - [ ] Webhook configurado en Meta Business
-- [ ] Workflow publicado en n8n
-- [ ] Webhook verificado en Meta
-- [ ] Mensaje de prueba enviado
+- [ ] Webhook verificado en Meta (GET request exitosa)
+- [ ] Eventos suscritos en Meta (messages, message_status)
+- [ ] Mensaje de prueba enviado desde WhatsApp
 - [ ] Lead creado en CRM
-- [ ] Logs verificados
+- [ ] Logs verificados en n8n y backend
 
 ---
 

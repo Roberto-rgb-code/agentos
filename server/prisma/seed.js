@@ -103,7 +103,7 @@ async function main() {
   for (const agenteData of agentesData) {
     const existing = await prisma.agentes.findFirst({
       where: { nombre: agenteData.nombre },
-    });
+      });
     if (!existing) {
       await prisma.agentes.create({ data: agenteData });
       console.log(`  ✓ Agente: ${agenteData.nombre}`);
@@ -324,7 +324,7 @@ async function main() {
           timestamp: new Date().toISOString(),
         },
       },
-    });
+      });
     console.log("  ✓ Webhook log de ejemplo creado");
   }
 
