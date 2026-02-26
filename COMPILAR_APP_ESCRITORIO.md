@@ -27,13 +27,47 @@ docker ps
 
 Si no está corriendo, abre Docker Desktop.
 
-### Paso 2: Navegar al directorio del proyecto
+### Paso 2: Instalar Yarn (si no lo tienes)
+
+El proyecto usa Yarn para el frontend. Instálalo con uno de estos métodos:
+
+**Opción A: Con Homebrew (recomendado en macOS)**
+
+```bash
+brew install yarn
+```
+
+Si no tienes Homebrew, instálalo primero:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**Opción B: Con npm (si tienes Node.js)**
+
+```bash
+npm install -g yarn
+```
+
+**Opción C: Con Corepack (Node.js 16.10+)**
+
+```bash
+corepack enable
+```
+
+Verifica la instalación:
+
+```bash
+yarn --version
+```
+
+### Paso 3: Navegar al directorio del proyecto
 
 ```bash
 cd "/ruta/a/agentos"  # Ajusta la ruta según tu caso
 ```
 
-### Paso 3: Instalar dependencias de Electron (si no están instaladas)
+### Paso 4: Instalar dependencias de Electron (si no están instaladas)
 
 ```bash
 cd electron
@@ -41,7 +75,7 @@ npm install
 cd ..
 ```
 
-### Paso 4: Construir el frontend
+### Paso 5: Construir el frontend
 
 ```bash
 cd frontend
@@ -57,7 +91,9 @@ mv _index.html index.html
 cd ../..
 ```
 
-### Paso 5: Compilar la aplicación para macOS
+**Nota:** Si prefieres usar npm en lugar de yarn, puedes usar `npm run build` en lugar de `yarn build`, aunque yarn es el recomendado para este proyecto.
+
+### Paso 6: Compilar la aplicación para macOS
 
 ```bash
 cd electron
@@ -67,7 +103,7 @@ cd ..
 
 Esto puede tardar varios minutos la primera vez.
 
-### Paso 6: Encontrar la aplicación compilada
+### Paso 7: Encontrar la aplicación compilada
 
 La aplicación estará en:
 
@@ -82,7 +118,7 @@ O directamente como `.app` en:
 electron/dist/mac/Agentos.app
 ```
 
-### Paso 7: Instalar la aplicación
+### Paso 8: Instalar la aplicación
 
 **Opción A: Desde el DMG**
 
@@ -95,7 +131,7 @@ electron/dist/mac/Agentos.app
 1. Copia `electron/dist/mac/Agentos.app` a tu carpeta **Aplicaciones**
 2. O mantenlo en el escritorio y haz doble clic
 
-### Paso 8: Configurar permisos (si es necesario)
+### Paso 9: Configurar permisos (si es necesario)
 
 Si macOS te dice que la aplicación no se puede abrir:
 
@@ -106,6 +142,35 @@ Si macOS te dice que la aplicación no se puede abrir:
 ```bash
 xattr -cr /Applications/Agentos.app
 ```
+
+---
+
+## 🔄 Alternativa: Usar npm en lugar de yarn
+
+Si prefieres **no instalar yarn**, puedes usar npm, aunque yarn es el recomendado:
+
+### Paso 1: Construir el frontend con npm
+
+```bash
+cd frontend
+npm install  # Solo la primera vez
+npm run build
+cd ..
+```
+
+### Paso 2: Renombrar el archivo
+
+```bash
+cd frontend/dist
+mv _index.html index.html
+cd ../..
+```
+
+### Paso 3: Continuar con la compilación
+
+Luego sigue desde el **Paso 6** (Compilar la aplicación para macOS) de la guía principal.
+
+**Nota:** Algunos proyectos pueden tener diferencias sutiles entre yarn y npm, pero en la mayoría de los casos funcionará igual.
 
 ---
 
@@ -160,7 +225,7 @@ Si haces cambios y quieres actualizar la aplicación:
 3. **Reconstruir el frontend:**
    ```bash
    cd frontend
-   yarn build
+   yarn build  # o npm run build si no tienes yarn
    cd frontend/dist
    mv _index.html index.html
    cd ../..
